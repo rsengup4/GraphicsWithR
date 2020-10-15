@@ -1,0 +1,2120 @@
+---
+title: "RGRAPHICS - A CROWDSOURCE BASED TRAINING INITIATIVE (APPENDIX)"
+author: "Rudradev Sengupta, Paulo R. Bargo, Bill Pikounis, Surya Mohanty"
+date: "23/07/2020"
+output:
+  bookdown::html_document2:
+    toc: TRUE
+    toc_float: TRUE
+    toc_depth: 2
+    number_sections: yes
+    css: ./lib/stylesArial2.css
+    code_folding: hide
+bibliography: RJreferences.bib 
+---
+
+# Assignment 1
+
+## Data
+
+In total, there were 686 observations of the following 10 variables:
+
+* horTh: Hormonal therapy, a factor at two levels no and yes
+* age: Age of the patients in years
+* menostat: Menopausal status, a factor at two levels pre (premenopausal) and post (postmenopausal).
+* tsize: Tumor size (in mm)
+* tgrade: Tumor grade, a ordered factor at levels I < II < III.
+* pnodes: Number of positive nodes.
+* progrec: Progesterone receptor (in fmol).
+* estrec: Estrogen receptor (in fmol).
+* time: Recurrence free survival time (in days)
+* cens: Censoring indicator (0- censored, 1- event)
+
+## Question
+
+Associated data (Assign1.xlsx) was provided in Excel file and participants were asked to solve the following questions:
+
+* Scatterplot for progesterone receptor (in fmol) vs. estrogen receptor (in fmol). Add color and shape to include information on
+  + Tumor Grade
+  + Menopausal Status
+* Pairwise plots of progesterone receptor (in fmol) vs. estrogen receptor (in fmol) vs. tumor size. It should include additional information through color and shape to provide better understanding of data.
+
+## Solution
+
+As the variables were not normally distributed, new variables were created using the log transformation. As there were 0 values - a basic imputation rule was implemented where 0 values were imputed as 1.
+
+There are two ways to plot:
+
+* Plot original data but the scale will be log-scale 
+
+```{r hw1plot1, echo=TRUE, warning=FALSE, message=FALSE, fig.cap="Scatterplot for progesterone receptor (in fmol) vs. estrogen receptor (in fmol) in log-scale. Tumor grade and menopausal status are differentiated by the color and shape, respectively."}
+## Loading the required libraries
+library(readxl)
+library(ggplot2)
+library(GGally)
+
+## Reading the data
+HW1_data <- read_excel("data/Assign1.xlsx")
+HW1_data$progrec2 <- ifelse(HW1_data$progrec==0, 1, HW1_data$progrec)
+HW1_data$estrec2 <- ifelse(HW1_data$estrec==0, 1, HW1_data$estrec)
+
+## Plotting Original Data on log-scale
+fig1a<- ggplot(data= HW1_data, aes(x=progrec2, y=estrec2, col=tgrade, shape=menostat)) 
+fig1a + geom_point() + 
+        labs(x="Progesterone receptor (fmol)", y="Estrogen receptor (fmol)", 
+             title="Effect of Progesterone Receptor on Estrogen Receptor", 
+             subtitle="Scatterplot of Estrogen and Progesterone", 
+             caption="Data source: Assign1.xlsx \n 
+             Original data on log scale (0 was imputed to 1)", col="Tumor Grade",
+             shape="Menopausal Status") + 
+        scale_x_log10() + 
+        scale_y_log10() +
+        theme_classic() + 
+        theme(plot.title=element_text(color="red4", size=10, face="bold", 
+             lineheight=0.9, hjust=0.5), plot.subtitle=element_text(color="red4", 
+             hjust=0.5,size=9), plot.caption=element_text(color="gray", face="italic", 
+             size=8)) 
+
+```
+
+<br> 
+
+* Plot the log-transformed data
+
+```{r hw1plot2, echo=TRUE, fig.cap="Scatterplot for log-transformed progesterone receptor (in fmol) vs. log-transformed estrogen receptor (in fmol). Tumor grade and menopausal status are differentiated by the color and shape, respectively."}
+
+## Plotting log-transformed data - use the log function within the aes() function
+fig1b <- ggplot(data= HW1_data, aes(x=log10(progrec2), y=log10(estrec2), col=tgrade, 
+       shape=menostat)) 
+
+fig1b + geom_point() + 
+        labs(x="Progesterone receptor (fmol)", y="Estrogen receptor (fmol)", 
+            title="Effect of Progesterone Receptor on Estrogen Receptor", 
+            subtitle="Scatterplot of Estrogen and Progesterone", 
+            caption="Data source: Assign1.xlsx \n 
+            Log transformed data (0 was imputed to 1)", col="Tumor Grade", 
+            shape="Menopausal Status") +
+        theme_classic() + 
+        theme(plot.title=element_text(color="red4", size=10, face="bold", 
+             lineheight=0.9, hjust=0.5), plot.subtitle=element_text(color="red4", 
+             hjust=0.5,size=9), plot.caption=element_text(color="gray", face="italic", 
+             size=8)) 
+```
+
+<br> 
+
+`ggpairs()` function was used to create the pairwise plot of the three variables as specified in the last part of the assignment. 
+
+```{r hw1plot3, echo=TRUE, fig.cap="Pairwise Scatterplot of Progesterone, Estrogen and Tumor Size. Tumor grade and menopausal status are differentiated by the color and shape, respectively."}
+
+HW1_data$progrec3 <- log10(HW1_data$progrec2)
+HW1_data$estrec3 <- log10(HW1_data$estrec2)
+
+fig2 <- ggpairs(data=HW1_data, columns=c("progrec3", "estrec3", "tsize"), 
+                title="Pairwise Scatterplot of Progesterone, Estrogen and Tumor Size",
+                axisLabels="show", 
+                columnLabels=c("Progesterone (fmol)","Estrogen (fmol)","Tumor Size"), 
+                upper=list(continuous="points"), 
+                mapping=aes(color=tgrade, shape=menostat), legend=c(3,2), 
+                diag="blank", 
+                xlab=NULL, 
+                ylab=NULL) 
+fig2 +  theme_bw() + 
+        theme(plot.title=element_text(color="red4", size=10, face="bold", 
+              lineheight=0.9, hjust=0.5), 
+              plot.subtitle=element_text(color="red4", hjust=0.5,size=9), 
+              plot.caption=element_text(color="gray", face="italic", size=8)) +
+        labs(caption="Data source: Assign1.xlsx \n 
+              Log transformed data for progesterone and estrogen (0 imputed to 1)", 
+              col="Tumor Grade", shape="Menopausal Status")
+```
+
+# Assignment 2
+
+## Data
+
+Viral load measurements at baseline across 3 different studies were provided. In total, there were 129 observations of the following 4 variables:
+
+* ID: Subject identifier
+* STUDYID: Study identifier
+*	LOGVLD: Viral load (log10 copies/ml)
+*	Type: Variable indicating the virus type
+
+## Question
+
+Associated data (Assign2.xlsx) was provided in Excel file and participants were asked to solve the following questions:
+
+* Create per study a histogram of the observed viral load measurements. The histograms of the 3 studies should be plotted in one figure in 3 panels.
+
+* Create per study a boxplot of the observed viral load measurements (also add the data points to the plot). The boxplots of the 3 studies should be plotted in one figure in 3 panels. Use different colors to represent the 2 types of the virus. On the graph indicate the mean viral load per study and type to the graph using, for example, a plus sign.
+
+* Create a graph in which the viral load measurements of the different studies are plotted using overlay density plots.
+
+## Solution
+
+```{r hw2plot1, echo=TRUE, warning=FALSE, message=FALSE, fig.cap="Histogram of the observed viral load measurements."}
+
+##The histograms of the 3 studies should be plotted in one figure in 3 panels.
+
+##install packages
+library(rio)
+library(tidyverse)
+library(xlsx)
+library(plyr) # For the revalue() function
+
+# Load data
+dat1=import("data/Assign2.csv")
+
+# Make a copy of the data
+dat2 <- dat1 
+
+# Convert study to a factor
+dat2$STUDYID <- factor(dat2$STUDYID)
+
+dat2$STUDYID <- revalue(dat2$STUDYID, c("1"="Study 1", "2"="Study 2", "3"="Study 3"))
+
+# Creating the actual Plot
+ggplot(dat2, aes(x=LOGVLD)) + geom_histogram(fill="white", colour="black", binwidth=0.5) +  
+  facet_grid(STUDYID ~ .) + ggtitle("Histogram of Viral Load Measure by Study") +
+  xlab("Viral Load (log10 copies/ml)") + ylab("Number of Subjects") +
+  theme(plot.title = element_text(color = "black", size = 12, face = "bold", hjust = 0.5))
+
+```
+
+```{r hw2plot2, echo=TRUE, warning=FALSE, message=FALSE, fig.cap="Boxplot of the observed viral load measurements."}
+
+slabels <- c("1" = "Study 1", "2" = "Study 2", "3" = "Study 3") # if you want to customize the labels in the grid
+
+plot2b <- ggplot(dat1, aes(x=TYPE, y=LOGVLD, fill=TYPE)) + 
+  geom_boxplot(width = 0.5) +    geom_dotplot(binaxis="y", binwidth=0.1, stackdir="center") +
+  stat_boxplot(geom ='errorbar', width = 0.1) +
+  facet_grid(. ~ STUDYID, labeller=labeller(STUDYID = slabels)) + theme_bw() +
+  theme(legend.position="none") +
+  labs(title="Viral Load Boxplots by Virus Type") +
+  theme(plot.title = element_text(color = "black", size = 12, face = "bold", hjust = 0.5)) +
+  ylab("Viral Load Measurements (log10 copies/mL)") + xlab("Virus Type") +
+  stat_summary(fun.y="mean", geom="point", size=2.5, shape=3, color="white", show.legend=FALSE)+
+  labs(subtitle="Mean Viral Load by Study and Type indicated as '+'") +
+  theme(plot.subtitle = element_text(color="black", size=10, hjust=0.5)) 
+
+plot2b
+```
+
+```{r hw2plot3, echo=TRUE, warning=FALSE, message=FALSE, fig.cap="Viral load measurements of the different studies are plotted using overlay density plots."}
+ggplot(dat2, aes(x=LOGVLD, fill=STUDYID)) + geom_density(alpha=.3)+
+  xlab("Viral Load (log10 copies/ml)")+ ggtitle("Overlay Density Plots of Viral Load by Study") +
+  theme(plot.title = element_text(color = "black", size = 12, face = "bold", hjust = 0.5))
+
+```
+
+
+# Assignment 3
+
+## Data
+
+Response rate of 4 endpoints (PASI90, PASI100, IGA0, IGA0/1) by visit, were provided. In total, there were 40 observations with following 6 variables:
+
+*	Response: Response rate 
+*	SE: Standard error
+*	visit: Visit (Week 4, Week 8, Week 12, Week 16, Week 24)
+*	trt: Treatment arm (Placebo, Active)
+*	endpoint: Endpoints (PASI90, PASI100, IGA0, IGA0/1)
+*	samplesize: Sample size 
+
+## Question
+
+**Line plot**
+<br> 
+Present the response rate of each endpoint by treatment (active vs placebo) and visit using line plot. 4 endpoints should be plotted in one figure with 4 panels in the following order: PASI90, PASI100, IGA0, IGA0/1. For each endpoint, the response rate by visit should be presented in 2 lines, one for each treatment group.
+
+* Calculate confidence interval (using response +/-2*SE) for each data point, and add it to the line plot.
+* Shift the line plot along with error bar by treatment to avoid overlapping of active and placebo at same visit.
+* Add sample size by treatment under each visit in X-axis; add footnote: “Imputation rules for missing data have been applied”; add shape and color by treatment with legend.
+* Change the distance between visits, e.g., week 16 to week 24 is twice the distance of week 0 to week 4.
+
+<br> 
+**Bar plot**
+<br> 
+Present the response rate of each endpoint by treatment and visit using bar plot. Similar to question 1, the figure should have 4 panels in the specified order.  
+
+* Use 3 different ways to present: *side by side*, *stack* and *overlay*.
+* Add upper confidence interval on top of bars.
+
+## Solution
+
+**Line plot**
+
+```{r hw3plot1, echo=TRUE, warning=FALSE, message=FALSE, fig.cap="Response rate of each endpoint by treatment (active vs placebo) and visit."}
+
+# Load libraries 
+library(sas7bdat)
+library(ggplot2)
+
+# Reading the data
+hw3 <- read.sas7bdat("data/Assign3.sas7bdat")
+#QC: 40 obs = 5 visits x 2 treatments x 4 endpoints. 1 obs = samplesize, Response, SE.
+
+# Line plot
+# Present the response rate of each endpoint by treatment (active vs placebo) and visit using line plot. 
+# 4 endpoints should be plotted in one figure with 4 panels in the following order: PASI90, PASI100, IGA0, IGA0/1. 
+# For each endpoint, the response rate by visit should be presented in 2 lines, one for each treatment group.
+
+visitsortd <- c("Week 4","Week 8", "Week 12","Week 16","Week 24")
+hw3$visit_f <- factor(hw3$visit, level=visitsortd)
+endptsortd <- c("PASI 90","PASI 100","IGA 0","IGA 0/1")
+hw3$endp_f <- factor(hw3$endpoint, level=endptsortd)
+hw3$visit_n <- as.numeric(substring(as.character(hw3$visit),6,8))
+
+fig3 <- ggplot(hw3, aes(x=visit_f, y=Response, group=trt, color=trt)) 
+
+fig3a <- fig3 + geom_line() + facet_grid(endp_f~. ) +
+  labs(title="Response Rate vs Time by Endpoint", x="Visit (weeks)", y="Response Rate", color="Treatment") +
+  theme(plot.title = element_text(hjust = 0.5))
+
+fig3a
+```
+
+```{r hw3plot2, echo=TRUE, warning=FALSE, message=FALSE, fig.cap="Response rate of each endpoint by treatment (active vs placebo) and visit together with confidence interval for each data point."}
+
+# Calculate confidence interval (using response+/-2*SE) for each data point, and add it to the line plot.
+
+fig3b <- fig3 + geom_line() + 
+  geom_errorbar(aes(ymin=Response-2*SE, ymax=Response+2*SE), width=.1) +
+  facet_grid(endp_f~. ) +
+  labs(title="Response Rate vs Time by Endpoint", subtitle="With Confidence Intervals", x="Visit (weeks)",  y="Response Rate (+/-2SE)", color="Treatment") +
+  theme(plot.title = element_text(hjust = 0.5),
+        plot.subtitle = element_text(hjust = 0.5))
+
+fig3b
+  
+```
+
+```{r hw3plot3, echo=TRUE, warning=FALSE, message=FALSE, fig.cap="Line plot shifted along with error bar by treatment to avoid overlapping of active and placebo at same visit."}
+
+fig3c <- fig3 + geom_line(position=position_dodge(-0.1)) + 
+  geom_errorbar(aes(ymin=Response-2*SE, ymax=Response+2*SE), width=.1, position=position_dodge(-0.1)) +
+  facet_grid(endp_f~. ) +
+  labs(title="Response Rate vs Time by Endpoint", subtitle="With horizontal shift to avoid overlap", x="Visit (weeks)", y="Response Rate (+/-2SE)", color="Treatment") +
+  theme(plot.title = element_text(hjust = 0.5),
+        plot.subtitle = element_text(hjust = 0.5))
+
+fig3c
+```
+
+
+```{r hw3plot4, echo=TRUE, warning=FALSE, message=FALSE, fig.cap="Line plot shifted along with error bar by treatment to avoid overlapping of active and placebo at same visit together with sample size by treatment for each visit."}
+
+fig3d <- fig3 + geom_line(position=position_dodge(-0.1)) + 
+  geom_point(aes(x=visit_f, y=Response, color=trt, shape=trt), position=position_dodge(-.1), size=3) +
+  geom_errorbar(aes(ymin=Response-2*SE, ymax=Response+2*SE), width=.1, position=position_dodge(-0.1)) +
+  geom_text(aes(x=visit_f,y=1.15,color=trt),label=paste("n=",hw3$samplesize),position=position_dodge(-.5), size=3) +
+  coord_cartesian(clip="off",ylim=c(-.25,1.25)) +
+  facet_grid(endp_f~.) + 
+  labs(title="Response Rate vs Time by Endpoint", subtitle="With Footnote and Sample Size", x="", y="Response Rate (+/-2SE)", color="Treatment", shape="Treatment", caption="Imputation rules for missing data have been applied") +
+  theme(plot.title = element_text(hjust = 0.5),
+        plot.subtitle = element_text(hjust = 0.5))
+
+fig3d
+```
+
+
+```{r hw3plot5, echo=TRUE, warning=FALSE, message=FALSE, fig.cap="Imputation rules for missing data have been applied."}
+
+fig3e <- ggplot(hw3, aes(x=visit_n, y=Response, group=trt, color=trt)) + 
+  scale_x_continuous(limits=c(0,28),breaks=seq(0,28,4))+
+  geom_line(position=position_dodge(-0.2)) + 
+  geom_errorbar(aes(ymin=Response-2*SE, ymax=Response+2*SE), width=.1, position=position_dodge(-0.2)) +
+  geom_point(aes(x=visit_n, y=Response, color=trt, shape=trt), position=position_dodge(-.2), size=3) +
+  facet_grid(endp_f~. ) +
+  labs(title="Response Rate vs Time by Endpoint", subtitle="With Real-time Axis", x="Visit (weeks)", y="Response Rate (+/-2SE)", color="Treatment", shape="Treatment") + 
+  theme(plot.title = element_text(hjust = 0.5),
+        plot.subtitle = element_text(hjust = 0.5))
+fig3e
+```
+
+**Bar plot**
+
+Three different ways were used for presentation purposes: side by side; stack; overlay and the corresponding outputs are displayed below.
+
+```{r hw3plot6, echo=TRUE, warning=FALSE, message=FALSE, fig.cap="Side-by-Side barplot for response rate against time for different endpoints."}
+
+ggplot(hw3, aes(x=visit_f, y=Response, group=trt, fill=trt)) + 
+  geom_col(position = position_dodge2(), color="black") +
+  facet_grid(.~endp_f) +
+  labs(title="Response Rate vs Time by Endpoint", subtitle="Side-By-Side", x="Visit (weeks)", y="Response Rate",fill="Treatment" ) + 
+  theme(plot.title = element_text(hjust = 0.5),
+        plot.subtitle = element_text(hjust = 0.5),
+        axis.text.x=element_text(angle=60))
+```
+
+```{r hw3plot7, echo=TRUE, warning=FALSE, message=FALSE, fig.cap="Stacked barplot for response rate against time for different endpoints."}
+
+ggplot(hw3, aes(x=visit_f, y=Response, group=trt, fill=trt)) + 
+  geom_col(position = "stack", color="black") +
+  facet_grid(.~endp_f) +
+  labs(title="Response Rate vs Time by Endpoint", subtitle="Stacked", x="Visit (weeks)", y="Response Rate", fill="Treatment") + 
+  theme(plot.title = element_text(hjust = 0.5),
+        plot.subtitle = element_text(hjust = 0.5),
+        axis.text.x=element_text(angle=60))
+```
+
+```{r hw3plot8, echo=TRUE, warning=FALSE, message=FALSE, fig.cap="Overlayed barplot for response rate against time for different endpoints."}
+
+ggplot(hw3, aes(x=visit_f, y=Response, group=trt, fill=trt)) + 
+  geom_col(position = position_dodge(.6), color="black", alpha=.8) +
+  facet_grid(.~endp_f ) +
+  labs(title="Response Rate vs Time by Endpoint", subtitle="Overlayed", x="Visit (weeks)", y="Response Rate", fill="Treatment") + 
+  theme(plot.title = element_text(hjust = 0.5),
+        plot.subtitle = element_text(hjust = 0.5),
+        axis.text.x=element_text(angle=90))
+```
+
+
+```{r hw3plot9, echo=TRUE, warning=FALSE, message=FALSE, fig.cap="Barplot with confidence intervals on top of bars for response rate against time for different endpoints."}
+
+ggplot(hw3, aes(x=visit_f, y=Response, group=trt, fill=trt)) + 
+  geom_errorbar(aes(ymin=Response, ymax=Response+2*SE), width=.2, position=position_dodge(.6)) +
+  geom_col(position = position_dodge(.6), color="black", alpha=.8) +
+  facet_grid(endp_f~. ) +
+  labs(title="Response Rate vs Time by Endpoint", subtitle="With Upper Confidence Bounds (+2*SE)", x="Visit (weeks)", y="Response Rate (+2SE)", fill="Treatment") + 
+  theme(plot.title = element_text(hjust = 0.5),
+        plot.subtitle = element_text(hjust = 0.5),
+        axis.text.x=element_text(angle=20))
+
+```
+
+# Assignment 4
+
+## Data
+
+Variables: 
+
+*	progrec: Progesterone receptor (in fmol)
+*	estrec: Estrogen receptor (in fmol) 
+*	tgrade: Tumor Grade
+*	menostat: Menopausal status
+*	tsize: Tumor size
+
+## Question
+
+**Linear Regression**
+<br>
+Explore the relationship between any two continuous variables (X & Y) and possible differential effect by a categorical group variable using linear regression. You have the option of choosing X, Y and the categorical group as you see relevant. 
+
+* Plot Y vs. X by Group (if there is a group differential effect) using different colors and shapes
+* Fit linear regressions by group and add the fitted lines to the point plot using different colors and shapes
+  + Add the prediction limits using transparent colors
+  +	Add (in text) the estimates of slope with 95% CI and R-squared to the graph
+
+## Solution
+
+```{r hw4plot1, echo=TRUE, warning=FALSE, message=FALSE, fig.cap="Scatterplot of estrogen receptor against progesterone receptor differentiated as per tumor grades."}
+
+#### Load Libraries ----
+
+library(haven)
+library(ggplot2)
+
+#### Load data ----
+MyData = read_sas("data/Assign4.sas7bdat")
+
+#### Selection of variables ----
+# X = estrec
+# Y = progrec
+# Z = tgrade
+MyData$log10.estrec = log10(MyData$estrec+1)
+MyData$log10.progrec = log10(MyData$progrec+1)
+
+#### Y vs. X by Group (if there is a group differential effect) using different colors and shapes ----
+
+ggplot(data=MyData, aes(x=log10.estrec, y=log10.progrec, color=tgrade)) +
+  theme_bw() +
+  #theme_bw(base_size=15) +
+  geom_point() +
+  labs(x="log10 Estrogen receptor \n (measured in fmol)", 
+       y="log10 Progesterone receptor \n (measured in fmol)", 
+       color="Tumor \n grade")
+
+```
+
+
+```{r hw4plot2, echo=TRUE, warning=FALSE, message=FALSE, fig.cap="Linear regression fitted by group and the corresponding lines together with the data points are represented using different colors and shapes."}
+
+ggplot(data=MyData, aes(x=log10.estrec, y=log10.progrec, color=tgrade)) +
+  theme_bw() +
+  geom_point() +
+  labs(x="log10 Estrogen receptor \n (measured in fmol)", 
+       y="log10 Progesterone receptor \n (measured in fmol)", 
+       color="Tumor \n grade") +
+  geom_smooth(method='lm' ,se=FALSE, show.legend=FALSE)
+
+```
+
+
+```{r hw4plot3, echo=TRUE, warning=FALSE, message=FALSE, fig.cap="Linear regression fitted by group. The corresponding lines are represented using different colors and shapes together with the prediction limits in transparent colours."}
+
+ggplot(data=MyData, aes(x=log10.estrec, y=log10.progrec, color=tgrade)) +
+  theme_bw() +
+  geom_point() +
+  labs(x="log10 Estrogen receptor \n (measured in fmol)", 
+       y="log10 Progesterone receptor \n (measured in fmol)", 
+       color="Tumor \n grade") +
+  geom_smooth(method='lm', aes(fill=tgrade), alpha=0.3, show.legend=FALSE)
+
+```
+
+
+```{r hw4plot4, echo=TRUE, warning=FALSE, message=FALSE, fig.cap="Linear regression fitted by group. The corresponding lines are represented using different colors and shapes together with the prediction limits in transparent colours.For each regression, the estimates of the slope with 95% confidence intervals and R-squared are specified in the graph as well."}
+
+# do the regression separately to collect the coefficients 
+fit1 = lm(log10.progrec ~ log10.estrec, data=MyData[MyData$tgrade=="I",])
+fit2 = lm(log10.progrec ~ log10.estrec, data=MyData[MyData$tgrade=="II",])
+fit3 = lm(log10.progrec ~ log10.estrec, data=MyData[MyData$tgrade=="III",])
+
+# prepare fit 1
+fit1.text1 = round(fit1$coefficients[2],2)
+fit1.text2 = round(confint(fit1)[2,1],2)
+fit1.text3 = round(confint(fit1)[2,2],2)
+fit1.text4 = round(summary(fit1)$r.squared,2)
+fit1.text = paste(fit1.text1, " [", fit1.text2, " ; ", fit1.text3, "]",
+                 ", R2 = ",fit1.text4,
+                 sep="")
+
+# prepare fit 2
+fit2.text1 = round(fit2$coefficients[2],2)
+fit2.text2 = round(confint(fit2)[2,1],2)
+fit2.text3 = round(confint(fit2)[2,2],2)
+fit2.text4 = round(summary(fit2)$r.squared,2)
+fit2.text = paste(fit2.text1, " [", fit2.text2, " ; ", fit2.text3, "]",
+                 ", R2 = ",fit2.text4,
+                 sep="")
+
+# prepare fit 3
+fit3.text1 = round(fit3$coefficients[2],2)
+fit3.text2 = round(confint(fit3)[2,1],2)
+fit3.text3 = round(confint(fit3)[2,2],2)
+fit3.text4 = round(summary(fit3)$r.squared,2)
+fit3.text = paste(fit3.text1, " [", fit3.text2, " ; ", fit3.text3, "]",
+                 ", R2 = ",fit3.text4,
+                 sep="")
+
+ggplot(data=MyData, aes(x=log10.estrec, y=log10.progrec, color=tgrade)) +
+  theme_bw() +
+  geom_point() +
+  labs(x="log10 Estrogen receptor \n (measured in fmol)", 
+       y="log10 Progesterone receptor \n (measured in fmol)", 
+       color="Tumor \n grade") +
+  geom_smooth(method='lm', aes(fill=tgrade), alpha=0.3, show.legend=FALSE) +
+  annotate(geom="text", label=fit1.text, x=0.5, y=3.5, color="#F8766D") +
+  annotate(geom="text", label=fit2.text, x=0.5, y=3.35, color="#00BA38") +
+  annotate(geom="text", label=fit3.text, x=0.5, y=3.2, color="#619CFF")
+
+```
+
+# Assignment 5
+
+## Data
+
+This dataset contains data over time from Rheumatoid Arthritis (RA) patients. The score is the number of active joints (= swelling, limited range etc.). It is a component of the ACR score and ranges from 0 (best) to 73 (worst). RA patients must have baseline score≥5, thus we use score=5 as the cut-off later. In total, there were 1071 Observations with the following 5 variables:
+ 
+*	SUBJECT: Subject ID
+*	REGION: Region of subject
+*	ARM: Treatment group of subject (Placebo, Active)
+*	AVISIT: Visit (Baseline, Week 4, Week 8, Week 16, Week 28, Week 32, Week 44)
+*	SCORE:  Number of active joints
+
+## Question
+
+**Longitudinal Data**
+
+* Plot mean of score over time (proportional to actual time scale) by arm with added confidence interval bars.
+<br>
+**Hint:** use `aggregate` function to calculate mean/confidence interval by groups before ggplot call. <br>
+Confidence interval = mean +/- 2*Standard error of the mean.
+*	Plot mean of score by region and arm over time and added confidence interval bars.
+*	Create a categorical variable with binary score (0: SCORE<5, 1: SCORE>=5), and plot the proportion of SCORE>=5 by arm and region over time, including confidence interval bars. 
+<br>
+**Hint:** use `ifelse` function or `dplyr` to create binary score before calling ggplot.
+*	Optional (Advanced): Calculate the p-value of interaction between (region and arm) and add the p-value to the previous plots (showing significance of <0.05 with a star).
+
+## Solution
+
+```{r hw5plot1, echo=TRUE, warning=FALSE, message=FALSE, fig.cap="Mean score over time (proportional to actual time scale) by arm with added bars for displaying confidence intervals."}
+
+# Set Up
+library(ggplot2)
+library(haven)
+library(rmarkdown)
+library(plyr)
+library (Rmisc)
+library(lme4)
+
+# read data
+df <-read_sas ("data/Assign5.sas7bdat")
+
+ds1 <- ddply(df, c("AVISIT","ARM"), summarize, 
+                n = length (SCORE),
+                mean = mean (SCORE),
+                sd = sd (SCORE),
+                se = sd / sqrt(n))
+
+ds1$NVISIT <- ifelse(ds1$AVISIT=='BASELINE',0,as.numeric(gsub('WEEK', '', ds1$AVISIT))) 
+## Warning in ifelse(ds1$AVISIT == "BASELINE", 0, as.numeric(gsub("WEEK",
+## "", : NAs introduced by coercion
+p1 <- ggplot(ds1,aes(x=NVISIT, y=mean, group=ARM, color=ARM, linetype=ARM, shape=ARM))+
+      ylab("Mean Score") +
+      geom_point(position=position_dodge(width=1.5))+
+      geom_line(position=position_dodge(width=1.5))+
+      scale_x_continuous(name='Weeks', breaks=c(0,4,8,16,28,32,44)) +
+      geom_errorbar(aes(ymin=pmax(mean-2*se, 0),
+                        ymax=pmin(mean+2*se,73)),position=position_dodge(width=1.5))
+  
+p1
+
+```
+
+```{r hw5plot2, echo=TRUE, warning=FALSE, message=FALSE, fig.cap="Mean score over time by region and arm over time. Confidence interval bars are displayed as well."}
+
+ds2 <- ddply(df, c("AVISIT","ARM","REGION"), summarize, 
+             n = length (SCORE),
+             mean = mean (SCORE),
+             sd = sd (SCORE),
+             se = sd / sqrt(n))
+
+ds2$NVISIT <- ifelse(ds2$AVISIT=='BASELINE',0,as.numeric(gsub('WEEK', '', ds2$AVISIT))) 
+## Warning in ifelse(ds2$AVISIT == "BASELINE", 0, as.numeric(gsub("WEEK",
+## "", : NAs introduced by coercion
+p2 <- ggplot(ds2,aes(x=NVISIT, y=mean, group=ARM, color=ARM, linetype=ARM, shape=ARM))+
+  geom_point(position=position_dodge(width=1.5))+
+  geom_line(position=position_dodge(width=1.5))+
+  scale_x_continuous(name='Weeks', breaks=c(0,4,8,16,28,32,44)) +
+  facet_wrap(~ REGION, ncol=2) +
+  geom_errorbar(aes(ymin=pmax(mean-2*se, 0),
+                    ymax=pmin(mean+2*se,73)),position=position_dodge(width=1.5))
+
+p2
+
+```
+
+```{r hw5plot3, echo=TRUE, warning=FALSE, message=FALSE, fig.cap="Plot of the proportion of SCORE >=5 by arm and region over time, including confidence interval bars."}
+
+df$CSCORE <- ifelse(df$SCORE<5, 0, 1)
+ds3 <- summarySE (df, measurevar="CSCORE", groupvars=c("ARM","REGION", "AVISIT")) 
+
+ds3$NVISIT <- ifelse(ds3$AVISIT=='BASELINE',0,as.numeric(gsub('WEEK', '', ds3$AVISIT))) 
+## Warning in ifelse(ds3$AVISIT == "BASELINE", 0, as.numeric(gsub("WEEK",
+## "", : NAs introduced by coercion
+p3 <- ggplot(ds3, aes(x=NVISIT, y=CSCORE, group=ARM, color=ARM, shape=ARM, linetype=ARM)) +
+      geom_point(position=position_dodge(width=1.5)) + 
+      geom_line(position=position_dodge(width=1.5)) +
+      scale_x_continuous(name='Weeks', breaks=c(0,4,8,16,28,32,44)) +
+      facet_wrap(~REGION, ncol=2) + #theme (legend.position="bottom") +
+      geom_errorbar(aes(ymin=pmax(CSCORE-ci, 0), ymax=pmin(CSCORE+ci, 1)),
+                    position=position_dodge(width=1.5))
+
+p3
+
+```
+
+```{r hw5plot4, echo=TRUE, warning=FALSE, message=FALSE, fig.cap="??"}
+
+fit <- lm (SCORE~AVISIT+ARM*REGION, df)
+pvalue_text <- paste0("p-value for interaction between arm and region \n ARMPlacebo:REGIONNorth America - ",
+                      round(summary(fit)$coefficients[10,4], digits=4), "*")
+
+p4 <- ggplot(ds1,aes(x=NVISIT, y=mean, group=ARM, color=ARM, linetype=ARM, shape=ARM))+
+      ylab("Mean Score") +
+      geom_point(position=position_dodge(width=1.5))+
+      geom_line(position=position_dodge(width=1.5))+
+      scale_x_continuous(name='Weeks', breaks=c(0,4,8,16,28,32,44)) +
+      geom_errorbar(aes(ymin=pmax(mean-2*se, 0),
+                        ymax=pmin(mean+2*se,73)),position=position_dodge(width=1.5)) +
+      annotate(geom="text", label=pvalue_text, x=22, y=15, color="black") 
+ 
+p4
+
+```
+
+
+# Assignment 6
+
+## Data
+
+Data related to chemotherapy for Stage B/C colon cancer was provided. This data is from one of the first successful trials of adjuvant chemotherapy for colon cancer. Levamisole is a low-toxicity compound previously used to treat worm infestations in animals; 5-FU is a moderately toxic (as these things go) chemotherapy agent. There are two records per person, one for recurrence and one for death. Following variables were available:
+
+* id: ID
+* study:	1 for all patients
+* rx:	Treatment - Obs(ervation), Lev(amisole), Lev(amisole)+5-FU
+* sex: Binary variable with 1 representing male
+* age: In years
+* obstruct:	Obstruction of colon by tumour
+* perfor:	Perforation of colon
+* adhere:	Adherence to nearby organs
+* nodes: Number of lymph nodes with detectable cancer
+* time:	Days until event or censoring
+* status:	Censoring status
+* differ:	Differentiation of tumour (1=well, 2=moderate, 3=poor)
+* extent:	Extent of local spread (1=submucosa, 2=muscle, 3=serosa, 4=contiguous structures)
+* surg: Time from surgery to registration (0=short, 1=long)
+* node4: More than 4 positive lymph nodes
+* etype: Event type: 1=recurrence,2=death
+
+The study is originally described in @Laurie1989. The main report is found in @Moertel1990. This data set is closest to that of the final report in @Moertel1995. A version of the data with less follow-up time was used in the paper by @Lin1994. 
+
+## Question
+
+* Create Kaplan-Meier survival plots comparing Obs(ervation) vs. Lev(amisole)+5-FU. 
+  + Add confidence bands to the two K-M curves. 
+  + Provide in text the Hazard Ratio, 95% Confidence Interval and P-value based on the Cox PH model in bottom right corner of the graph. 
+  + Add the number of subjects at-risk and cumulative number of events for each of the two treatment arms, below the graph. The time interval should be equally spaced in 1-year intervals.  Tip: try the package ‘survminer’.
+* Create a Kaplan-Meier cumulative hazard function plot, time versus cumulative hazard, comparing Obs(ervation) vs. Lev(amisole)+5-FU. 
+  + Add the number of events happened in the interval in the previous plot. This number of events is not the cumulative number and depends on the number of events occurred during the yearly interval.
+
+
+## Solution
+
+
+```{r hw6plot1, echo=TRUE, warning=FALSE, message=FALSE, fig.cap=""}
+
+# set up
+library("sas7bdat")
+library("survival")
+library("survminer")
+library("htmlTable") # for the table
+
+# read data
+dat1 <- read.sas7bdat("data/Assign6.sas7bdat")
+
+## Some Data Wrangling - Create a descriptive categorical variable for treatment group: 
+dat1$TRT <- with(dat1, ifelse(rx==1, "Observation", ifelse(rx==2, "Lev", "Lev+5-FU")))
+
+recurdata <- data.frame(subset(dat1, etype==1))
+deathdata <- data.frame(subset(dat1, etype==2))
+recurdata2 <- data.frame(subset(recurdata, recurdata$TRT=="Observation" | recurdata$TRT=="Lev+5-FU"))
+
+recurfit <- survfit(Surv(time, status) ~ TRT, conf.int = 0.95, data = recurdata2) 
+# compute Kaplan-Meier survival estimates with survfit and Surv functions
+# print(recurfit)
+# the object recurfit contains the data needed to create a survival curve 
+# use this in ggsurvplot function
+# save results as an object mysurv to make updates later
+mysurv<-ggsurvplot(recurfit,
+           pval = FALSE,            # do not print p-value of the Log-Rank test
+           pval.method = FALSE,     # do not print name of the test
+           conf.int = TRUE,         # 95% confidence limits of the survival time
+           linetype = "TRT",        # assign line type by groups
+           surv.median.line = "hv", # h=horizontal v=vertical lines for the median survival time
+           xlab = "Time in days",   # customize X axis label
+           ylab="Proportion of Subjects without \n a Recurrence", # customize Y axis label
+           break.time.by = 365,     # break X axis into 1-year time intervals
+           xlim = c(0, 3285),       # manually adjust x axis range
+           title = "Survival Plot of Time to Recurrence by Treatment Group with 95% CI",
+           legend.title = "TRT",
+           legend.labs = c("Lev+5-FU", "Observation"),
+           font.main = 13,          # customize the font sizes as needed
+           font.x = 13, 
+           font.y = 13,
+           font.tickslab = 11,
+           font.legend = 11,
+           risk.table = TRUE,       # add number at risk table
+           risk.table.col = "TRT",  # risk table color by groups
+           fontsize = 3,            # risk table fontsize
+           tables.height = 0.21,    # height of the tables below the plot
+           cumevents = TRUE,        # add cumulative number of events table
+           cumevents.col = "TRT",   # cumulative events table color by groups
+           ggtheme = theme_bw()
+           )
+
+
+myr2.cox <- coxph(Surv(time, status) ~ TRT, data =  recurdata2)
+sumres2 <- summary(myr2.cox)  
+
+myhr <- round(sumres2$coefficients[2], 2)      # the hazard ratio
+rpval <- round(sumres2$coefficients[5], 7)     # the p-value
+mypval<- ifelse(rpval<0.001, "<0.001", as.factor(rpval))   # round p-value if very small
+mylower <- round(sumres2$conf.int[3], 2)       # LL of the CI
+myupper <- round(sumres2$conf.int[4], 2)       # UL of the CI
+myci <- paste("(", mylower, ",", myupper, ")") # create label for the CI 
+
+mysurv$plot <- mysurv$plot+ 
+  ggplot2::annotate("text", size=3,
+                    x = 2800, y = 0.15, # position of the text on the graph
+                    label=paste("Hazard Ratio:",myhr,"\n 95% CI: ",myci, "\n p-value:", mypval))
+mysurv
+
+
+## create the table
+
+source("Assign6_extraFile.R") # for the table
+
+fiti2=survdiff(Surv(time, status)~TRT, data=recurdata2)
+plr=1 - pchisq(fiti2$chisq, length(fiti2$n) - 1); # plr
+
+fiti=coxph(Surv(time, status) ~ TRT, data =  recurdata2)
+coefi=summary(fiti)$conf.int[c(1,3,4)]; #coefi
+
+###  Output  ###
+dati=recurdata2
+ni0=c(sum(dati$TRT=="Lev+5-FU"), sum(dati$TRT=="Observation"))
+ni1=c(sum(dati$TRT=="Lev+5-FU" & dati$status==1), sum(dati$TRT=="Observation" & dati$status==1))
+ni2=c(sum(dati$TRT=="Lev+5-FU" & dati$status==0), sum(dati$TRT=="Observation" & dati$status==0))
+
+ni3=rbind(ni2, ni1)
+
+out2=data.frame(Term=c("Number assessed","Number censored (%)","Number of recurrences (%)"), ARM1=c(ni0[1], sprintf("%i (%.1f%%)",ni3[,1],ni3[,1]/ni0[1]*100)), ARM2=c(ni0[2], sprintf("%i (%.1f%%)",ni3[,2],ni3[,2]/ni0[2]*100)), stringsAsFactors = F)
+
+
+### Percentile of time to relapse
+fiti3=survfit(Surv(time, status)~TRT, data=recurdata2, conf.type="log-log")
+
+out3=NULL; qi=c(0.25,0.5,0.75); i=3
+for (i in 1:length(qi)) {
+  temi=quantile(fiti3, qi[i])
+  if (i<length(qi)) {
+    temii=quantile(fiti3, qi[i+1])
+    
+    temi1=temii$quantile
+    temi3=temi$upper
+    for (i2 in 1:2) {
+      if (!is.na(temi1[i2]) & is.na(temi3[i2])) {
+        temi$upper[i2]=temi1[i2]
+      }
+    }
+  }
+  
+  temi1=temi$quantile; temi1[is.na(temi1)]=""
+  temi2=temi$lower; temi2[is.na(temi2)]="NE"
+  temi3=temi$upper; temi3[is.na(temi3)]="NE"
+  
+  
+  temi4=(sprintf("%s.0 (%s.0; %s.0)",temi1,temi2,temi3))
+  temi4=gsub("NE.0","NE",temi4)
+  temi4=gsub("NE; NE","NE",temi4)
+  temi4[which(temi1=="")]="NE"
+  temi4=rev(temi4)
+  out3=rbind(out3,temi4)
+}
+out3=data.frame(Term=c("25% percentile (95% CI)","Median (95% CI)","75% percentile (95% CI)"), ARM1=out3[,2], ARM2=out3[,1], stringsAsFactors = F) 
+## may need to adjust depending on order of ARM values in data
+
+temi=sprintf("%.3f",plr)
+temi=ifelse(temi=="0.000","<0.001","temi")
+out4i=data.frame(Term="Two-sided P-value(c)",ARM1=temi,ARM2="",stringsAsFactors = F)
+
+## HR
+out4j=data.frame(Term="Hazard Ratio (95% CI)(b)",ARM1=sprintf("%.2f (%.2f; %.2f)",coefi[1],coefi[2],coefi[3]),ARM2="",stringsAsFactors = F)
+
+out1=rbind(out2,"",out3,"",out4j,out4i)
+out1=cbind(out1, iB=0, iI=1)
+out1=rbind(data.frame(Term="Time to Recurrence (days)(a)",ARM1="",ARM2="",iB=0,iI=0,stringsAsFactors = F),out1)
+colnames(out1)[c(2:3)]=c("Lev+5-FU","Observation")
+
+colnames(out1)[-c(1,2,3)]=paste0(colnames(out1)[-c(1,2,3)],".delete")
+
+
+## Observation first
+out1=out1[,c(1,3,2,4,5)]
+
+
+title1="<b>Table: Time to Recurrence and Number (%) of Subjects That Remained Recurrence Free</b>"
+
+tfoot1="<br>(a) Based on Kaplan-Meier product limit estimates.
+(b) Regression analysis of survival data based on Cox proportional hazards model with treatment as a factor.
+(c) Log-rank test.
+Note: NE stands for Not Estimable."
+
+tmp=outputFF(out1, title1, tfoot1)
+tmp
+
+
+```
+
+```{r hw6plot2, echo=TRUE, warning=FALSE, message=FALSE, fig.cap=""}
+
+
+
+myhaz<-ggsurvplot(recurfit,
+                  fun = "cumhaz",          # to plot the cumulative hazard function
+                  conf.int = TRUE,         # 95% CI of the survival function
+                  linetype = "TRT",        # Change line type by groups
+                  xlab = "Time in days",   # customize X axis label
+                  break.time.by = 365,     # break X axis into 1-year time intervals
+                  xlim = c(0, 3285),       # manually adjust the x axis range
+                  title = "Cumulative Hazard Function Plot for Recurrence with 95% CI",
+                  font.main = 13,          # customize the font sizes as needed
+                  font.x = 13, 
+                  font.y = 13,
+                  font.tickslab = 11,
+                  font.legend = 11,
+                  legend.title = "TRT",
+                  legend.labs = c("Lev+5-FU", "Observation"),
+                  risk.table = TRUE,       # add number at risk table
+                  risk.table.col = "TRT",  # risk table color by groups
+                  fontsize = 3,            # risk table fontsize
+                  tables.height = 0.21,    # height of the tables below the plot
+                  ggtheme = theme_bw() + theme(plot.title=element_text(hjust=0.5))
+                  ) 
+
+#myhaz$data.survtable$time                        # look at the time point values
+mytime<-list(myhaz$data.survtable$time[2:10])    # time values, skip time 0
+
+#myhaz$data.survtable$n.event                     # look at the events data
+mylev<-list(myhaz$data.survtable$n.event[2:10])  # n events for LEV5FU, skip time 0
+
+# gather the information into a data frame for the LEF5FU group
+mylevdat <- data.frame(
+  x = mytime,
+  leve = mylev)
+names(mylevdat)[1]<-"x"
+names(mylevdat)[2]<-"leve"
+
+
+myobs<-list(myhaz$data.survtable$n.event[12:20]) # n events for observation, skip time 0
+# make a separate data frame for the observation group
+myobsdat <- data.frame(
+  x = mytime,
+  obse = myobs)
+names(myobsdat)[1]<-"x"
+names(myobsdat)[2]<-"obse"
+
+myhaz$plot <- myhaz$plot+ 
+  ggplot2::geom_text(data=mylevdat, mapping=aes(x=x, y=-0.10, label = leve),size=2) +
+  ggplot2::geom_text(data=myobsdat, mapping=aes(x=x, y=-0.15, label = obse),size=2) +
+  ggplot2::annotate("text", x=300, y=-0.05, label=c("Number of Events in the Preceding Interval"),size=2)+
+  ggplot2::annotate("text", x=0, y=-0.10, label=c("Lev+5-FU"),size=2)+
+  ggplot2::annotate("text", x=0, y=-0.15, label=c("Observation"),size=2)
+
+myhaz
+
+
+```
+
+
+# Assignment 7
+
+**ROC Curves**
+
+A Receiver Operator Characteristic (ROC) Curve is a graphical tool that displays the predictive power of a binary classifier across various discriminating thresholds. Specifically, the ROC curve plots the true positive rate (sensitivity) versus the false positive rate (1- specificity). In R the package, several packages provide functions to create ROC curves (ROCR, 2005; pROC, 2010; PRROC, 2014; plotROC, 2014; PRROC, 2014; ROCit, 2019). Figure \@ref(fig:hw7) represents the number downloads of these various packages from the CRAN repository over time. The plotROC package also offers a shiny app accessible by run the command shiny_plotROC(). Feel free to explore
+
+```{r hw7, echo=TRUE, warning=FALSE, message=FALSE, out.width="80%", out.height="80%", fig.cap="Number of downloads of ROC Curves package from R CRAN."}
+
+library(knitr)
+img_path <- "figures/ROC.png"
+include_graphics(img_path)
+```
+
+## Data
+
+## Question
+
+For this assignment, we will focus on the pROC and plotROC packages. The data we will use is a built-in dataset from the pROC package called aSAH.  The dataset provides information on 7 features for 113 patients with aneurysmal subarachnoid hemorrhage (a life-threatening type of stroke caused by bleeding into the space surrounding the brain). Please see the data description file for more details.
+
+* Install and load the pROC and ggplot2 packages; load the aSAH data.
+<br>
+**Hint:** Use the command `data(aSAH)`. 
+* Using the `roc` function, obtain sensitivity, specificity and thresholds values for predicting the outcome variable as a function of the wfns score and plot the ROC curve for this model using the `ggroc` function. Make sure that the false positive rate is plotted on the X-axis. Add the 45º line to the plot. Make sure to enhance your plot (title, axis labels, line type, color, plot background, etc.)
+* Using the `ggroc` function, plot on the same graph the ROC curves for predicting the outcome variable as a function of the wfns score, and the ndka levels respectively. 
+* Install and load the plotROC package.
+* Multivariate model: Construct a multivariate logistic model predicting the outcome variable as function of the wfns score and ndka levels (use `glm` function) and obtain the fitted values from the model.  Using these fitted values along with the observed outcome, construct the ROC Curve using the `ggplot` function along with `geom_roc` from the plotROC package.  Add the area under the curve statistic to the graph. Feel free to enhance your plot. Make sure to enhance your (title, axis labels, line type, color, plot background, 45º line etc.) 
+* Using the `geom_roc`, plot on the same graph the ROC curves for predicting the outcome variable as a function of the wfns score, and the ndka levels respectively. Make sure to label each curve appropriately on the graph and add their respective Area under the Curve (AUC) to the graph.
+
+
+## Solution
+
+```{r hw7plot1, echo=TRUE, warning=FALSE, message=FALSE, fig.cap="ROC curve for the model for predicting the outcome variable as a function of the wfns score with false positive rate plotted on the X-axis."}
+
+#set up, load plotROC pkg later to avoid conflict in library load/function names
+library(pROC)
+library(tidyverse)
+
+# load data
+data(aSAH)
+
+## Using the roc function, obtain sensitivity, specificity and thresholds values for predicting of the outcome variable as a function of the wfns score and plot the ROC curve for the model later using the ggroc function. Make sure that the false positive rate is plotted on the x-axis.  Add the 45º line to the plot. Make sure to enhance your plot (title, axis labels, line type, color, plot background, etc.)
+
+rocobj <- roc(aSAH$outcome, aSAH$wfns)
+#list(rocobj$thresholds, rocobj$sensitivities, 1-rocobj$specificities) 
+ggroc(rocobj,color="turquoise3", legacy.axes=TRUE)+
+  geom_abline(intercept = 0, slope = 1, linetype=2)+
+  scale_y_continuous(limits=c(0,1),expand=c(0,0))+
+  theme(plot.title = element_text(hjust = 0.5))+
+  ggtitle("ROC with WFNS as Predictor")
+
+```
+
+
+```{r hw7plot2, echo=TRUE, warning=FALSE, message=FALSE, fig.cap="ROC curves for predicting the outcome variable as a function of the wfns score and the ndka levels respectively."}
+
+##Using the ggroc function, plot on the same graph the ROC curves for predicting the outcome variable as a function of the wfns score and the ndka levels respectively. 
+
+roc.list <- roc(outcome ~ ndka+wfns, data = aSAH)
+ggroc(roc.list,legacy.axes=TRUE)+
+  geom_abline(intercept = 0, slope = 1, linetype=2)+
+  scale_x_continuous(limits=c(0,1),expand=c(0,0))+
+  scale_y_continuous(limits=c(0,1),expand=c(0,0))+
+  theme(plot.title = element_text(hjust = 0.5))+
+  ggtitle("ROC with WFNS and NDKA as Predictor Respectively")
+
+
+```
+
+```{r hw7plot3, echo=TRUE, warning=FALSE, message=FALSE, fig.cap="ROC curve for the multivariate logistic model predicting the outcome variable as function of the wfns score and ndka levels."}
+
+library(plotROC)
+## Multivariate model: Construct a multivariate logistic model predicting the outcome variable as function of the wfns score and ndka levels (use glm function) and obtain the predicted values from the model.  Using the predicted values along with the observed outcome, construct the ROC Curve using the gglot2 function geom_roc from the plotROC package.  Add the area under the curve statistic to the graph. Feel free to enhance your plot. Make sure to enhance your (title, axis labels, line type, color, plot background, 45º line etc.) 
+
+fit<-glm(outcome ~ ndka+wfns, data = aSAH, family=binomial())
+predict<-predict(fit, type="response")
+aSAHb <- cbind.data.frame(aSAH,predict)
+
+d<- ggplot(data=aSAHb, aes(m=predict, d=outcome))+geom_roc(color='red')+
+  geom_abline(intercept = 0, slope = 1, linetype=2)+
+  scale_y_continuous(limits=c(0,1),expand=c(0,0))+
+  theme(plot.title = element_text(hjust = 0.5))+
+  ggtitle("ROC with WFNS and NDKA both as Predictors")+
+  labs(x ="1-Specificity", y = "Sensitivity")
+
+rocstat<-calc_auc(d)
+
+
+d + geom_text(x=.45, y=.8, aes(label=paste("AUC = ", round(rocstat$AUC,4))), 
+              vjust= 1.6, color="black", size=5)
+
+```
+
+```{r hw7plot4, echo=TRUE, warning=FALSE, message=FALSE, fig.cap="ROC curves for predicting the outcome variable as a function of the wfns score, and the ndka levels respectively with the respective AUC mentioned in the graph."}
+
+### Using the geom_roc, plot on the same graph the ROC curves for predicting the outcome variable as a function of the wfns score, and the ndka levels respectively. Make sure to label each curve appropriately on the graph and add their respective AUC to the graph.
+
+data <- data.frame(D=c(aSAH$outcome, aSAH$outcome),
+                   M=c(aSAH$wfns, aSAH$ndka),
+                   Z=c(rep("WFNS", nrow(aSAH)), rep("NDKA", nrow(aSAH))))
+e<-ggplot(data, aes(m=M, d=D, color=Z))+geom_roc()+
+  geom_abline(intercept = 0, slope = 1, linetype=2)+
+  scale_y_continuous(limits=c(0,1),expand=c(0,0))+
+  theme(plot.title = element_text(hjust = 0.5))+
+  ggtitle("ROC with WFNS and NDKA as Predictor Respectively")+
+  labs(x ="1-Specificity", y = "Sensitivity")
+rocstat<-calc_auc(e)
+
+e + geom_text(x=0.2, y=.9, aes(label=paste("AUC = ", round(rocstat$AUC[2],3))), vjust= 1.6, color="turquoise3", size=5)+ 
+  geom_text(x=0.5, y=.5, aes(label=paste("AUC = ", round(rocstat$AUC[1],3))), vjust= 1.6, color="lightcoral", size=5)
+
+
+```
+
+
+# Assignment 8
+
+**Forest Plots**
+
+Forest plot is widely used tool in clinical trials results presentation, meta-analysis visualization and epidemiology studies. It does not focus on the raw data, but displaying the output of certain model together with the uncertainty of presented estimates. In R, the *forestplot* package can be leveraged for visualization, building on the *lattice* package. However, we are going to focus on an alternative approach, using *ggplot* environment to obtain similar or even better results.
+
+## Data
+
+The dataset Assign8_MyData has 392 observations and 6 variables. It contains the variables below:
+
+*	pregnantCAT: Class variable indicating the number of times pregnant
+*	glucose: Plasma glucose concentration (glucose tolerance test) (divided by 10)
+*	pressure: Diastolic blood pressure (mm Hg) (divided by 100)
+*	mass: Body mass index (divided by 10)
+*	ageCAT: Class variable indicating age category (years)
+*	diabetes: Class variable (test for diabetes)
+
+The dataset Assign8_MyData.GLMsum contains the estimates, odds ratios and associated confidence intervals from a logistic regression model.
+<br>
+The dataset MyData.GLMsumPerPregnancy contains the estimates, odds ratios and associated confidence intervals from two logistic regression models (fit per Pregnancy status).
+
+## Question
+
+As mentioned, for this assignment *ggplot2* will be used, together with *grid* and *gridExtra* to add tabulated results to the plot. The data set as case study is available, together with output of logistic regression models fitted to this data. 
+
+* Install and load the *grid*, *gridExtra* and *ggplot2* packages; load the data .
+<br>
+**Hint:** Use the command load(Assign8_MyData.RData).
+* Fit a logistic model on the data using `glm` function. Firstly, fit the model with all covariates as additive effects. 
+<br>
+**Hint:** Create factor variables of the variables pregnantCAT and ageCAT.
+<br>
+Secondly, fit two models, each per pregnancy status (thus don’t include pregnantCAT in the model anymore). Compare the results of the models with Assign8_MyData.GLMsum and Assign8_MyData.GLMsumPerPregnancy. 
+<br>
+Continue with the provided datasets; converting glm output into these summaries is laborious data management. Let us focus on visualization instead.   
+* Create forest plot of modelling results Assign8_MyData.GLMsum (Odds ratios and their confidence intervals) using usual ggplot command accompanied with *geom_pointrange* (to get forest plot) and *geom_errorbar* (to get clearer bars ending). 
+<br>
+**Hint:** *coord_flip()* command may come handy and *scale_y_log10()* is worth checking too.
+* Prepare analogous forest plot for Assign8_MyData.GLMsumPerPregnancy, separating clearly visually the results for two pregnancy statuses. There are multiple ways on how to address this task within classical ggplot framework. 
+<br>
+**Hint:** Use the *facet_wrap()* command.
+* Working with any of the two modelling outputs above, create TableGrob object. Add TableGrob object to the respective forest plot.
+<br>
+**Hint:** For better visualizations, round all the numbers to 2 digits.
+<br>
+**Hint:** Use the grid.arrange() command to add the table alongside the forest plot
+
+## Solution
+
+```{r hw8plot1, echo=TRUE, warning=FALSE, message=FALSE, fig.cap="Forest plot (Odds ratios and their confidence intervals) for the first model."}
+
+# set up 
+library(ggplot2)
+library(grid)
+library(gridExtra)
+
+# load data
+load("data/Assign8_MyData.RData")
+load("data/Assign8_MyData.GLMsum.RData")
+load("data/Assign8_MyData.GLMsumPerPregnancy.RData")
+
+MyData = MyData %>% 
+  mutate(pregnantCAT = as.factor(pregnantCAT),
+         ageCAT = as.factor(ageCAT)) 
+
+### Question 2: Fit GLM model
+glmfit <- glm(diabetes  ~ pregnantCAT + ageCAT + glucose + mass + pressure, 
+              family=binomial(link=logit),  MyData)
+
+glmfit2 <- glm(diabetes  ~ ageCAT + glucose + mass + pressure, family = "binomial",
+              MyData[MyData$pregnantCAT == "> 3 times",])
+
+glmfit3 <- glm(diabetes  ~ ageCAT + glucose + mass + pressure, family = "binomial",
+               MyData[MyData$pregnantCAT != "> 3 times",])
+
+## summary of these models were compared with details provided in Assign8_MyData.GLMsum and Assign8_MyData.GLMsumPerPregnancy files.
+
+p <- ggplot(data = MyData.GLMsum, aes(x = parameter, y = OR, ymin = LL, ymax = UL)) +
+  theme_bw() + 
+  coord_flip() +      # put parameter to y-axis 
+  geom_pointrange() + # add the confidence intervals  
+  geom_hline(yintercept =1, linetype=2) + # adds the reference line on OR = 1
+  geom_errorbar(aes(ymin=LL, ymax=UL), width=0.5, cex=1) + #adds error bars at the end of the CI
+  labs(y="Odds Ratio (95% CI)", x="") + # adds label of x-axis
+  scale_y_log10(breaks=c(0, 1, 5, 10, 15)) # change the scale for OR
+
+p
+```
+
+
+```{r hw8plot2, echo=TRUE, warning=FALSE, message=FALSE, fig.cap="Forest plot for the results for two pregnancy statuses."}
+
+ggplot(data = MyData.GLMsumPerPregnancy, aes(x = parameter, y = OR, ymin = LL, ymax = UL)) +
+  theme_bw() + 
+  coord_flip() +      # put parameter to y-asix 
+  geom_pointrange(aes(col = parameter)) + # add the confidence intervals  
+  geom_hline(yintercept =1, linetype=2) + # adds the reference line on OR = 1
+  geom_errorbar(aes(ymin=LL, ymax=UL, col = parameter), width=0.5, cex=1) + #adds error bars at the end of the CI
+  labs(y="Odds Ratio (95% CI)", x="")+ # adds label of x-axis
+  facet_wrap(~ Pregnancy, strip.position = "left", nrow = 2, scales = "fixed") + 
+  theme(strip.text.y = element_text(hjust=0, vjust = 1, angle = 180 , face = "bold"),
+        axis.text.y=element_blank(),
+        axis.ticks.y=element_blank()) + 
+  scale_color_manual(values = c("gold3", "forestgreen", "darkgoldenrod4","yellow3",
+                                "turquoise4", "black")) + xlab("Pregnancy") +
+  theme(legend.position = "bottom")
+
+
+```
+
+
+```{r hw8plot3, echo=TRUE, warning=FALSE, message=FALSE, fig.cap="Forest plot together with the table of estimates."}
+
+# Add TableGrob 
+T.GLMsum = MyData.GLMsum
+T.GLMsum[,2:5] = round(MyData.GLMsum[,2:5], 2) 
+g = tableGrob(T.GLMsum, rows = NULL)
+grid.newpage()
+#grid.draw(g)
+
+grid.arrange(p, g, ncol=1)
+
+
+
+```
+
+
+# Assignment 9-10
+
+**R Markdown**
+
+Our goal is to Create a document from R Markdown that includes Graphs, Tables and Narrative Text with input from summary data. The Narrative Text will include inline R calculations, described in the question below.
+<br>
+For a practical introduction to R Markdown, See the online [R for Data Science chapter (27) by Wickham and Grolemund](https://r4ds.had.co.nz/r-markdown.html).
+
+## Data
+
+This assignment uses data and results from previous assignments (Assignment 2, Assignment 3 and Assignment 8).
+
+## Question
+
+<span style="color: brown;">NOTE: All outputs created from the instructions below must be placed in the same R Markdown document.</span>
+
+* Prerequisites:
+  + Install and load the R-package *htmlTable*. The `htmlTable` function will be used to create a CSR-like table.
+  + Load the summary of demographic characteristics in the “Assign9_10_Table1.rdata” R workspace file.
+<br>
+[Here](https://cran.r-project.org/web/packages/htmlTable/vignettes/tables.html) is a reference for practical introduction to htmlTable.
+* Using data from the table object of Table1.rdata, describe the difference between the diabetes negative and positive groups in the narrative Text of the R markdown document. 
+<br>
+For example, “the majority of subjects were in the age category xx (xx.x%) for diabetes negative and xx (xx.x%) for diabetes positive. The mean of plasma glucose concentration was slightly higher in the diabetes positive group (mean [SD]: xx.x (x.xx) vs xx.x (x.xx)).”
+<br>
+**Hint:** Refer to [Section 27.4.6 Inline code of the R for Data Science online book](https://r4ds.had.co.nz/r-markdown.html#inline-code).
+* Use geom_bar to create a bar plot for the frequency distribution of age category by diabetes status. Refer to Assignment 3.
+* Use geom_boxplot to create a boxplot for the glucose by diabetes status. Refer to Assignment 2.
+* Load “Assign8_MyData.GLMsum.RData” which provides the ingredients for a summary table. 
+  + Create a table for the odds ratios and 95% CIs.
+  + Describe the results in the narrative text of the R Markdown document, including commentary on the 95% CIs that do not include 1.
+* Create a forest plot with odds ratios and 95% CI for the Assign8_MyData.GLMsum.RData. Refer to Assignment 8. Add this to the R markdown document.
+* Load “Assign8_MyData.GLMsumPerPregnancy.RData”
+  + Create a table for the odds ratio and 95% CI by number of pregnancies categories.
+  + Provide a summary of your observations in narrative text. Include key quantitative measures (point estimates & CI) to support your summary. 
+* Refer to Assignment 8. Create a forest plot of the odds ratios and 95% CIs from the table ingredients of Assign8_MyData.GLMsumPerPregnancy.RData. 
+
+
+## Solution
+
+```{r hw9, echo=TRUE, warning=FALSE, message=FALSE}
+
+# set up
+library(tidyverse)
+library(car)
+library(knitr)
+library(htmlTable)
+
+# load data
+load("data/Assign8_MyData.RData")
+load("data/Assign8_MyData.GLMsum.RData")
+load("data/Assign8_MyData.GLMsumPerPregnancy.RData")
+load("data/Assign9_10_Table1.rdata")
+
+# source("RFun2.R") - missing the wrapper from Xiang 
+
+header2=c("Diabetes Negative","Diabetes Positive","Total")
+nhd2=length(header2)
+
+dat1=MyData
+
+dati=dat1
+dati$ageCAT=dplyr::recode(dati$ageCAT, "[20-25] years" = "20-25","[26-35] years" = "26-35",
+                                  "> 35 years" = ">35")
+
+out1=Table1
+out1$iI.delete=c('0','','0','1','2','2','2','','0','1','2','2','','0','1','2','2','2','','0','1','2','2','2','','0','1','2','2','2')
+
+temAgeM=c("20-25","26-35",">35")[apply(table(dati$ageCAT, dati$diabetes),2,which.max)]
+
+```
+
+A total of `r nrow(dat1)` subjects were included in this dataset with `r sum(dat1$diabetes=="neg")` diabetes negative and `r sum(dat1$diabetes=="pos")` diabetes positive. The study population had very different age distributions between diabetes negative and positive. The majority of subjects were in the age category `r sprintf("%s (%.01f%%)",temAgeM[1],round2(sum(dati$ageCAT==temAgeM[1] & dati$diabetes=="neg")/sum(dati$diabetes=="neg"),3)*100)` for diabetes negative and `r sprintf("%s (%.01f%%)",temAgeM[2],round2(sum(dati$ageCAT==temAgeM[2] & dati$diabetes=="pos")/sum(dati$diabetes=="pos"),3)*100)` for diabtes positive. The mean of plasma glucose concentration was slightly higher in the diabetes positive group (mean [SD]: `r sprintf("%.01f (%.02f)", mean(dati$glucose[dati$diabetes=="pos"]), sd(dati$glucose[dati$diabetes=="pos"]))` vs `r sprintf("%.01f (%.02f)", mean(dati$glucose[dati$diabetes=="neg"]), sd(dati$glucose[dati$diabetes=="neg"]))`).
+
+
+```{r}
+# •	glucose: Plasma glucose concentration (glucose tolerance test) (divided by 10)
+# •	pressure: Diastolic blood pressure (mm Hg) (divided by 100)
+# •	mass: Body mass index (divided by 10)
+
+tfooti="Note: plasma glucose concentration is divided by 10; diastolic blood pressure is divided by 100; body mass index is divided by 10."
+
+outputFF(out1, title1=sprintf("<b>%s: %s</b>","Table 9.1","Summary of Population Characteristics"), tfoot1=tfooti) #, twidth1=480)
+
+```
+
+<br>
+
+
+#### Graphics
+
+Below is a bar plot, showing the frequency distribution of age category by diabetes status. It may also suggest that diabetes positive group tends to be in the older subjects.
+
+<br>
+
+```{r hw9plot1, echo=TRUE, warning=FALSE, message=FALSE, fig.cap="Frequency Distribution of Age Category by Diabetes Status."}
+
+dati=dat1
+
+ud1=as.character(unique(dati$diabetes))
+ud2=as.character(unique(dati$ageCAT))
+
+out2=NULL; i2=i=1
+for (i2 in 1:length(ud1)) {
+  ni0=sum(dati$diabetes==ud1[i2])
+  for (i in 1:length(ud2)) {
+    
+    out2=rbind(out2, data.frame(diabetes=ud1[i2],ageCAT=ud2[i],Freq=sum(dati$diabetes==ud1[i2] & dati$ageCAT==ud2[i])/ni0, stringsAsFactors=F))
+    
+  }
+}
+
+out2$ageCAT=dplyr::recode(out2$ageCAT, "[20-25] years" = "20-25","[26-35] years" = "26-35",
+                                  "> 35 years" = ">35")
+out2$diabetes=dplyr::recode(as.character(out2$diabetes), "neg" = "Negative", "pos" ="Positive")
+
+ni0=c(sum(dati$diabetes=="neg"),sum(dati$diabetes=="pos"))
+labeli=sprintf("%s (N=%i)",c("Negative","Positive"),ni0)
+
+
+p1=ggplot(data=out2, aes(x=ageCAT, y=Freq, group=diabetes, fill=diabetes)) +
+  geom_bar(stat="identity", position = "dodge", width =0.4) +
+  
+  scale_fill_manual("Diabetes status",breaks=c("Negative","Positive"),values=c("blue4","red4"),labels=labeli)+
+  scale_y_continuous(name="Percentage of Subjects", limits=c(0,1))+
+  labs(x = "Age Category")+
+  
+  # scale_fill_discrete(name = "Diabetes", labels = c("A", "B"))+
+
+  theme_bw()+
+  theme(legend.justification="right",
+        legend.position=c(1,0.9))
+
+p1
+
+```
+
+<br>
+
+Figure \@ref(fig:hw8plot2) shows the boxplot of glucose by diabetes status. It may suggest that diabetes positive group tends to have a higher glucose concentration.
+
+```{r hw9plot2, echo=TRUE, warning=FALSE, message=FALSE, fig.cap="Boxplot of Glucose by Diabetes Status."}
+dati=dat1
+
+ni0=c(sum(dati$diabetes=="neg"),sum(dati$diabetes=="pos"))
+labeli=sprintf("%s\n(N=%i)",c("Negative","Positive"),ni0)
+
+dati$diabetes=dplyr::recode(as.character(dati$diabetes), "neg"="Negative","pos"="Positive")
+
+p2=ggplot(dati, aes(x=factor(diabetes), y=glucose)) +
+  geom_boxplot(width=0.4)+
+  
+  scale_x_discrete("Diabetes Status", labels=labeli)+
+  scale_y_continuous(name="Plasma Glucose Concentration (divided by 10)", limits=c(0,25))+
+  labs(x = "Diabetes Status")+
+  
+  theme_bw()
+
+p2
+
+```
+
+```{r, results='hide'}
+
+#load("MyData.GLMsum.RData")
+dat2=MyData.GLMsum
+
+outi=dat2
+outi$est=sprintf("%.02f (%.02f; %.02f)", outi$OR, outi$LL, outi$UL)
+outi=outi[-c(1,6),]
+outi$parameter=c("Age 26-35 vs 20-25 years","Age > 35 vs 20-25 years","Plasma glucose concentration","Body mass index","Pregnant > 3 vs <=3 times","Diastolic blood pressure (mm Hg)")
+
+out1=outi[,1:2]
+```
+
+We investigated the association between diabetes status with other factors using logistic regression. Results are summarized in Table 2. Based on the logistic regression, older subjects were more likely to have positive diabetes with odds ratio of `r sprintf("%s in %s",out1[1,2],tolower(out1[1,1]))` and `r sprintf("%s in %s",out1[2,2],tolower(out1[2,1]))`. In addition, subjects with higher glucose or BMI were also more like to have positive diabetes with odds ratio of `r sprintf("%s",out1[3,2])` and `r sprintf("%s",out1[4,2])`, respectively.
+
+
+```{r}
+colnames(out1)[2]="OR (95% CI)"
+tfooti="
+Key: OR = odds ratio; CI = confidence interval
+Note: plasma glucose concentration is divided by 10; diastolic blood pressure is divided by 100; body mass index is divided by 10."
+
+outputFF(out1, title1=sprintf("<b>%s: %s</b>","Table 2","Summary of Odds Ratio of Diabetes Positive"), tfoot1=tfooti) #, twidth1=350)
+
+```
+
+<br>
+
+The results were plotted in the forest plot below.
+
+```{r hw9plot3, echo=TRUE, warning=FALSE, message=FALSE, fig.cap="Summary of Odds Ratio of Diabetes Status; Logistic Regression."}
+
+glm_sum1 <- MyData.GLMsum %>%
+  filter(est != 0) %>%
+  mutate(param = factor(parameter, labels = c("Age: 25-36 vs. 20-26 years", "Age: >35 vs 20-26 years",
+                                              "Glucose/10", "BMI, kg/m2/10",
+                                              "Pregnant: >3 vs. <=3", "DBP, mmHg/100")))
+
+ # Select non-zero estimates and create string with ORs and CIs
+glm_sum1a <- glm_sum1 %>%
+
+  # sprintf() is a base R function that formats a submitted value as specifed in the quoted string.
+  #  "f" means to format in fixed decimal notation; the "%.2" means to format to 2 decimal points.
+  #   This was used so that rounded values that may have 0 in the second decimal will include the 0 in 
+  #   the formatted result.
+  mutate(OR_text = str_c(sprintf("%.2f", OR),
+                         " (", sprintf("%.2f", LL),
+                         ", ", sprintf("%.2f", UL),
+                         ")"))
+
+# Add OR and CI values to the plot using geom_text() instead of the suggested TableGrob approach.
+
+# Add to the plot in Part 3.
+p3 = ggplot(glm_sum1a, aes(x = OR, y = param)) +
+  
+  # Reduce font size of plot title
+  theme(plot.title = element_text(size = rel(0.8))) +
+
+  # Extend x-axis limits to fit the text to be added
+  scale_x_log10(breaks = c(0.1, 1, 10), labels = c("0.1", "1", "10"), limits = c(0.05, 1000)) +
+  
+  # Next 3 lines same as in the original plot
+  geom_vline(xintercept = 1, linetype = "dashed") +
+  geom_point(size = 2.5) +
+  geom_errorbarh(aes(xmin = LL, xmax = UL), height = 0.2) +
+  
+  # Add OR and CI values next to the error bars
+  geom_text(aes(x = 100, y = param, label = OR_text), size = rel(3), hjust = 0) +
+  theme_bw()
+
+p3
+```
+
+```{r, results='hide'}
+
+#load("MyData.GLMsumPerPregnancy.RData")
+dat3=MyData.GLMsumPerPregnancy
+
+outi=dat3
+outi$est=sprintf("%.02f (%.02f; %.02f)", outi$OR, outi$LL, outi$UL)
+
+outi=cbind(outi[1:6,1:2],est2=outi[-c(1:6),2])
+outi=outi[-c(1),]
+outi$parameter=c("Age 26-35 vs 20-25 years","Age > 35 vs 20-25 years","Plasma glucose concentration","Body mass index","Diastolic blood pressure (mm Hg)")
+
+out1=outi
+```
+
+Overall, the subgroup analyses show similar odds ratio of diabetes status in most of factors between number of pregnancy > 3 vs &le; 3 times. Differential odds ratio were observed in the age group, where older subjects were more likely to have diabetes in subjects with &le; 3 times of pregnancy with OR (95% CI) of `r sprintf("%s for %s",out1$est2[1],tolower(out1$parameter[1]))` and `r sprintf("%s for %s",out1$est2[2],tolower(out1$parameter[2]))`.
+
+
+```{r}
+colnames(out1)[2:3]=c("> 3 times","&le; 3 times")
+tfooti="
+Key: OR = odds ratio; CI = confidence interval
+Note: plasma glucose concentration is divided by 10; diastolic blood pressure is divided by 100; body mass index is divided by 10."
+
+cgroup1=c("","Number of Pregnancy")
+n.cgroup1=c(1,2)
+
+outputFF(out1, title1=sprintf("<b>%s: %s</b>","Table 3","Summary of Odds Ratio of Diabetes Positive by Number of Pregnancy"), tfoot1=tfooti, cgroup1=cgroup1, n.cgroup1=n.cgroup1) #twidth1=420,
+
+```
+
+<br>
+
+```{r hw9plot4, echo=TRUE, warning=FALSE, message=FALSE, fig.cap="Summary of Odds Ratio of Diabetes Status by Number of Pregnancy; Logistic Regression."}
+
+glm_sum2 <- MyData.GLMsumPerPregnancy %>%
+  filter(est != 0) %>%
+  mutate(param = factor(parameter, labels = c("Age: 25-36 vs. 20-26 years", "Age: >35 vs 20-26 years",
+                                              "Glucose/10", "BMI, kg/m2/10", "DBP, mmHg/100")))
+
+glm_sum2a <- glm_sum2 %>%
+  mutate(OR_text = str_c(sprintf("%.2f", OR),
+                         " (", sprintf("%.2f", LL),
+                         ", ", sprintf("%.2f", UL),
+                         ")"))
+
+glm_sum2a$Pregnancy[glm_sum2a$Pregnancy=="<= 3 times"]="\u2264 3 times"
+
+p4=ggplot(glm_sum2a, aes(x = OR, y = Pregnancy)) +
+  theme(plot.title = element_text(size = rel(0.8))) +
+  scale_x_log10(breaks = c(0.01, 0.1, 1, 10, 50), labels = c("0.01", "0.1", "1", "10", "50"),
+                limits = c(0.01, 7000)) +
+  geom_vline(xintercept = 1, linetype = "dashed") +
+  geom_point() +
+  geom_errorbarh(aes(xmin = LL, xmax = UL), height = 0.2) +
+  geom_text(aes(x = 200, y = Pregnancy, label = OR_text), size = rel(3), hjust = 0) +
+  facet_wrap(vars(param), ncol = 1) +
+  coord_fixed(ratio = 1/4) + theme_bw()
+
+p4
+
+```
+
+# Assignment 11-12
+
+**Arranging Data for Clear Communication**
+
+The goal of this assignment is to practice arranging data for clear communication. We will achieve this through the use of the [*flexdashboard* R package](https://rmarkdown.rstudio.com/flexdashboard/). The *flexdashboard* package makes it easy to publish a group of related data visualizations as an HTML dashboard.  There are many [examples](https://rmarkdown.rstudio.com/flexdashboard/examples.html) available online with accompanying source code to give you an idea of what these dashboards can look like. 
+
+There are many ways you can analyze and present this data. Here are some questions that can be explored:
+
+* How did the number of HF admissions change over time?
+* What are the main causes for readmission of HF patients?
+* Are there generational differences in risks for re-admission or death (age cohorts)?
+* What effect do co-existing health issues have on the survival of the patients? Does the answer depend on the follow-up time? Did the rates change over time?
+* What effect do co-existing health issues have on the readmission rates? Does the answer depend on the follow-up time? Did the rates change over time?
+* Can we separate subpopulations of the patients with distinct characteristics? How do their outcomes differ?
+* Is there competing risk between different types of readmissions and mortality?
+* Is there difference in survival between patients readmitted for HF and those who were not?
+
+
+## Data
+
+The data set (Assign11_12_hf_readm.csv) contains simulated hospital admission records of 10,000 heart failure (HF) patients. Each patient has a single record corresponding to the patient's first HF admission (i.e. the index admission). First set of variables contains demographics and key dates (also available as Assign11_12_demographics.csv):
+
+* Patient_ID: Patient ID (1 through 10,000)
+* bdat: Date of birth
+* admdat: Index admission (I.e. first HF admission) date
+* sex: Sex
+* insur: Primary insurance type
+* readmreason: Reason for readmission: HF, AMI, Stroke, TIA or Other
+* readmdat: The date of first readmission after the index admission
+* deathdat: Date of death
+
+Study endpoints include all-cause death, all-cause readmission and HF readmission. The outcomes are not explicitly defined: NAs in deathdat and readmdat columns signify that the event did not occur until the end of the study (31/12/2015). Each event can be defined within a given time interval (e.g. 30, 60, 90, 180 days, 1 year from the index admission, etc.) and analyzed using, for example, logistic regression. Since both, the date of the index admission and the date of an event are known, survival analysis can also be done. Think of using birth dates as well, e.g. age at the index admission as a covariate in the model, age cohorts, etc.). For the all-cause readmission, the distribution of reasons for the readmission can also be studied.
+
+Comorbidities defined at the time of index admission. These include chronic conditions (hypertension, COPD, diabetes, etc.) as well as prior cardiovascular events (AMI, stroke, TIA, etc.). You can define your own inclusion/exclusion criteria, e.g. cancer. Following variables are included in Assign11_12_comorbidities.csv file:
+
+* ami: Acute Myocardial Infarction
+* stroke: Stroke
+* tia: Transient Ischemic Attack
+* hyp: Hypertension
+* asc: Atherosclerosis
+* cmyo: Cardiomyopathy
+* anem: Anemia
+* lipid: Disorders of Lipid Metabolism
+* diab: Diabetes
+* obes: Obesity
+* cld: Chronic Liver Disease and Cirrhosis
+* kd: Chronic Kidney Disease/Acute Kidney Failure
+* copd: Chronic Obstructive Pulmonary Disease
+* sleep: Sleep Apnea
+* thyr: Thyroiditis
+* cancer: Cancer
+
+
+## Question
+
+We will focus on a simple dashboard with graphics and tables but without user input because Shiny will be covered in a later session.
+
+* Familiarize yourself with the heart failure data set using the provided data description below. This assignment is designed to give you time to explore and understand the data before creating the output document to summarize your findings and model results.
+* Read in the data using the `read_csv()` function from the readr package (included in the tidyverse set of packages).
+  + Create a column named age holding the age at index admission by subtracting the birth date column (bdat) from the admission date column (admdat) (**Hint:** be sure to convert the difference between dates to an integer with `as.integer()` and convert units from days to approximate age by dividing by 365.25)
+* Perform some exploratory data analysis checking the distributions of 
+  + age – mean, SD, median, min, max 
+  + sex – simple, or, can explore categorization of age and include a 2x2 table of age category by sex
+  + insur - simple summary
+  + readmreason – simple summary of reason for readmission.
+* Install the flexdashboard package (install.packages("flexdashboard")). Create a new R markdown file to hold the code for your dashboard. In RStudio Cloud, select File > New File > Rmarkdown… . Then select “From Template” and choose “Flex Dashboard”.
+* Create tables and/or plots of the summarized data from step 3 and arrange them into your R markdown file as a single page called “Cohort Demographics”. For example, if you want to show 3 tables or plots, you can copy the following into your R markdown document and add code inside the R chunks to create each output. You can adjust the layout as needed (see the [documentation](https://rmarkdown.rstudio.com/flexdashboard/layouts.html) for examples).
+* Fit a logistic regression model, or another model of choice, with binary 30-day (you can also select another relevant window such as 90 day, 180 day or 1 year) all-cause readmission and/or all-cause death as the response considering all other variables in the dataset or a subset as predictors. You will need to create the response variable based on the readmdat or deathdat columns (**Hint:** be careful with NA values in the dates). Make sure to remove variables from the model which would not be available at the time of hospital discharge (such as readmreason). Summarize the model results on a new tab called “Model Results” (**Hint:** to create a new tab in flexdashboard, just create a new 1st level header: # Model Results). The model results tab should include, at a minimum, graphical/tabular outputs summarizing model fit or performance and a graphical explanation of how predictor variables influence response. The goal is for the viewer of this tab to quickly understand the answer to the question: “What factors are predictive of hospital re-admission or death?” 
+* Review the short [primer](https://rstudio.cloud/learn/primers/3.8) on data visualization available via RStudio Cloud. After completing the primer, consider how you might make any of the plots in your dashboard easier to understand by customizing the labels, themes, scales, legends, or annotations in your plots.
+* Optional (Advanced): For those who want to take their plotting skills to the next level, explore the `girafe()` function from the [ggiraph package](https://davidgohel.github.io/ggiraph/articles/offcran/using_ggiraph.html) or the `ggplotly()` function from the [plotly package](https://plot.ly/ggplot2/), which both extend the functionality of ggplot2 to allow for interactive graphics (e.g. zooming, tooltips on hover, etc.). You could also explore the use of the [gganimate package](https://github.com/thomasp85/gganimate) to animate ggplots (for example: to show a change in subject demographics or model results over time). Use these functions to add useful information to your plots. Remember that just because you can add a feature doesn’t mean you should. Always consider whether adding any interactivity or animation makes the graphic easier to understand.
+
+## Solution
+
+The codes necessary for this assignment and the corresponding result are available in a separate files in the GitHub repository. One needs to set the output parameter in the Rmarkdown YAML header as `flexdashboard::flex_dashboard` with the following parameter values:
+
+* `storyboard: true`
+* `orientation: columns`
+* `vertical_layout: fill`
+
+# Assignment 13
+
+**Tidyverse (tidyr and dplyr) and By Processing**
+
+The tidyr and dplyr (part of tidyverse package) provide functions for cleaning, processing, and manipulating data. The dplyr package provides a general framework for manipulation of data frames in R. This package shares many stylistic concepts with packages such as ggplot2 and tidyr. The package provides the following operations:
+
+* `filter()`: Subsets observations based on specified criteria
+* `select()`: Picks specific variables
+* `arrange()`: Sorts observations 
+* `mutate()`: Creates new variables 
+* `join()`: Merges datasets
+* `group_by()`: Creates grouped data
+* `summarise()`: Provides summary data
+
+The tidyr package provides functions to reshape data into suitable structures. It provides the following operations:
+
+* `gather()`: Reshapes from wide to long format
+* `spread()`: Reshapes from format to wide format 
+* `separate()`: Splits a single column into multiple columns
+* `unite()`: Combines multiple columns into a single column
+
+## Data
+
+The following two of R's built-in datasets were used in this assignment: 
+
+***mtcars***
+
+A data frame with 32 observations on 11 (numeric) variables.
+
+* mpg: Miles/(US) gallon
+* cyl: Number of cylinders
+* disp: Displacement (cu.in.)
+* hp: Gross horsepower
+* drat: Rear axle ratio
+* wt: Weight (1000 lbs)
+* qsec: 1/4 mile time
+* vs: Engine (0 = V-shaped, 1 = straight)
+* am: Transmission (0 = automatic, 1 = manual)
+* gear: Number of forward gears
+* carb: Number of carburetors
+
+***messyData***
+
+A data frame with 33 observations on  7 variables.
+
+* Subject: Subject ID
+* Placebo.1: Response under Placebo at Time 1
+* Placebo.2: Response under Placebo at Time 2
+* Drug1.1: Response under Drug1 at Time 1
+* Drug1.2: Response under Drug1 at Time 2
+* Drug2.1: Response under Drug2 at Time 1
+* Drug2.2: Response under Drug2 at Time 2
+
+## Question
+
+For this assignment, some of these functions will be explored on two of R's built-in datasets. Participants can explore other functions further. 
+
+* Install and load the tidyverse library. Install the datasets package and load the data mtcars from the datasets package into R. The data was extracted from the 1974 Motor Trend US magazine and comprises fuel consumption and 10 aspects of automobile design and performance for 32 automobiles (1973–74 models).
+* Create a variable carname that takes the car names.
+<br>
+**Hint:** Use the `rownames()` function. 
+<br>
+Also create a variable hp_wt=hp/wt.  Sort your dataset by hp_wt. Subset your dataset to only include observations with mpg>15 and carb values different from 1. Next, only include in your subset car dataset carname, cyl, disp, hp_wt and gear. Plot each car against its hp_wt. Make sure the plot is order by increasing values of hp_wt. Add color to distinguish between gears. Make sure to label your plot appropriately.
+* Using the summarise function, obtain the summary statistics (min, mean, median, sd, max) hp_wt each combination of gear and cyl.
+* Install and load the package mangoTraining. Load the messyData dataset.  This dataset presents the results of a drug trial where patients underwent a sequence of 3 treatments (Placebo, Drug1 and Drug2) under two different conditions (Condition1 and Condition 2). Reshape this data into a long format with the variables Subject, Treatment, Condition, Response.
+<br>
+**Hint:** Use sep = “\\.”. 
+<br>
+Add to this dataset the mean response across conditions per treatment for each subject and plot the mean profiles against the treatment sequence.  Label your plot.
+* Save the two plots to a pdf file.
+
+
+## Solution
+
+```{r hw13plot1, echo=TRUE, warning=FALSE, message=FALSE, fig.cap="Gross horsepower by weight for different cars."}
+
+# setup
+library(tidyverse)
+library(datasets)
+library(mangoTraining)
+
+# load data
+data(mtcars)
+
+carsub <- mtcars%>%mutate(carname=rownames(mtcars), hp_wt=hp/wt)%>%
+  arrange(hp_wt)%>%
+  mutate(carname = factor(carname, levels =carname)) %>% 
+  filter(mpg>15 & carb!=1)%>%
+  select(carname, cyl, disp, hp_wt, gear)
+
+
+ggplot(data=carsub, aes(x=hp_wt, y=carname))+
+  geom_point(aes(color=gear)) +
+  xlab("Horsepower by Weight") #+
+  #labs(title = "hp_wt by Cars")
+
+```
+
+Summary statistics (min, mean, median, sd, max) were obtained for gross horsepower by weight for each combination of gear and cyl.
+
+```{r, warning=FALSE, message=FALSE, echo=TRUE}
+summary <- mtcars %>%
+  mutate(car = rownames(mtcars), hp_wt = hp/wt) %>% 
+  arrange(hp_wt) %>%
+  mutate(car = factor(car, levels =car)) %>% 
+  filter(mpg > 15 , carb != 1) %>% 
+  select(car,cyl, disp, hp_wt, gear) %>% 
+  group_by(gear, cyl) %>% 
+  dplyr::summarise(n = n(),min_hp_wt = min(hp_wt), mean_hp_wt = mean(hp_wt),med_hp_wt = median(hp_wt),
+            sd_hp_wt = sd(hp_wt), max_hp_wt = max(hp_wt))
+
+print(summary)
+```
+
+```{r hw13plot2, echo=TRUE, warning=FALSE, message=FALSE, fig.cap="Mean profiles for different subjects across different treatments."}
+
+data(messyData)
+
+p <- messyData %>% 
+   gather(key = Treatment_Condition, value = Response, - Subject) %>% 
+   separate(col = Treatment_Condition, into = c("Treatment", "Condition"), sep = "\\.") %>% 
+   group_by(Subject, Treatment) %>% 
+   mutate(mean_Treatment = mean(Response)) %>% 
+   ggplot(aes(x =factor (Treatment, levels = c("Placebo", "Drug1", "Drug2")),
+                         y= mean_Treatment, group = factor(Subject), color = factor(Subject)))+
+   geom_point()+
+   geom_line()+
+   theme(legend.position="bottom", legend.box = "horizontal",
+         plot.title=element_text(size=10, face="bold", hjust=0.5)) +
+   labs( x = "Treatment", y = "Mean Treatment", title= "Mean profiles across Treatment Sequence",
+         color = "Subject")
+
+p
+
+```
+
+
+# Assignment 14
+
+**Heatmaps**
+
+Heatmaps are a visualization tool in which data values are represented as colors in the form of a map or diagram.  Typically, in drug development—especially in the area of genetics—heatmaps are used when many variables are measured per experimental unit (e.g. many patients with many parameters measured).  For example, data for a given patient may be displayed with certain colors corresponding to increases/decreases in the data values, allowing all results for the patient to be displayed simultaneously as a two-dimensional grid (see Figure \@ref(fig:hw14)). Heatmaps are especially useful for large datasets like genomics and imaging, allowing for fast exploration of high dimensional data. They are often complemented by clustering methods (single dimension) or biclustering methods (for two dimensions simultaneously). The discriminative power of heatmaps is often substantially decreased when various scales are present among measured properties. Hence, data plotted using a heatmap are often scaled, rather than plotting the original values.
+
+```{r hw14, echo=TRUE, warning=FALSE, message=FALSE, out.width="80%", out.height="80%", fig.cap="Heatmap example from Wikipedia: microarray experiment."}
+
+library(knitr)
+img_path <- "figures/assign14_fig1.png"
+include_graphics(img_path)
+```
+
+## Data
+
+***bmx data***
+
+This dataset is available in bmx_data.csv file. Variable 1 is the name of the biomarker, there are 30 rows of data representing one biomarker per row of data.  Each column represents one subject.
+
+
+***bleed data***
+
+This dataset is available in bleed.csv file.
+
+* dose: Treatment variable whose values are PLACEBO, LOW, MIDDLE, HIGH
+* PARAM: Variable descriptions
+* PARAMCD: Code for above described variables
+* AVAL: Analysis value
+* CHG: Change from baseline
+* PCHG: Percent change from baseline
+* ANRIND: Indicates if value was out of range : NORMAL, LOW, HIGH
+* timeindays: Time variable, unit=days, values less than 1 represent hours (for example, .02 ~ 0.5 hours)
+* subj: Subject identifier
+
+## Question
+
+There are many various functions in R that can create heatmaps. We will skip R’s built-in heatmap function due to its limited functionality. Instead, we will focus on the creation of heatmaps within the ggplot environment and investigate one of the more advanced wrapper packages.  
+
+* Install and load the ggplot2 and superheat packages; load the data 
+<br>
+**Hint:** Use the command  `read.csv2()` or `readr()` from tidyverse  
+* Using the Assign14_bmx_data.csv data, create a heatmap using *ggplot()* and the *geom_tile()* command. First, create the heatmap using the “raw” data values and see why scaling is important for meaningful visualization. Scale the data and create a new heatmap using the scaled data. 
+<br>
+**Hint:** In the *scale()* command keep “center” option as TRUE. 
+* Improve your heatmap: change the colour scheme, adjust labelling for readability, etc.
+* Create a heatmap using the superheat package and the bleed.csv data.  Plot CHG or PCHG where paramcd= ‘PT’ (prothrombin time) vs. timeindays, with one line of “tiles” for each subject.  Include some indication of dose on the plot. You may also choose to explore variables other than PT. 
+<br>
+[**Hint**](https://rlbarter.github.io/superheat/index.html)
+* Add an adjacent lineplot at the side of the heatmap using the superheat framework. The lineplot will display the PT means (subject means) at each timepoint. An example of a lineplot/heatmap combination can be found [here](https://arxiv.org/pdf/1512.01524.pdf).
+* Optional (Advanced): Check out other heatmap visualization options - basic built-in `heatmap()` function, `heatmap.2()` from gplots, `pheatmap()` (package named likewise), Heatplus package from Bionconductor, `heatmap.3()` from GMD package or `heatmap3()` (package named likewise).
+* Optional (Advanced): Can you think of use cases for heatmaps outside of microarray/MRI/genetic data? Could this be used to reflect site enrollment, etc.?  See google images for some interesting ideas.
+
+
+## Solution
+
+```{r hw14plot1, echo=TRUE, warning=FALSE, message=FALSE, fig.cap="Heatmap of the biomarker data without scaling."}
+
+# set up
+library(ggplot2)
+library(pheatmap)
+library(superheat)
+library(reshape2)
+library(tidyr)
+library(dplyr)
+
+#load data
+bmx  <- read.csv('data/Assign14_bmx_data.csv',header=TRUE, check.names=TRUE)
+bleed <- read.csv('data/Assign14_bleed.csv', header=TRUE, check.names=TRUE)
+
+###Format Data and Plot with geom_tile without Scaling###
+bmx2 <- bmx
+bmx2L <- melt(bmx2, value.name="Value", variable.name = "subject")
+bmx2L$subject_cd<- substr(bmx2L$subject, 18, 27)
+
+
+ggplot(bmx2L, aes(subject_cd, Biomarker)) + 
+  geom_tile(aes(fill= Value) ) +
+  theme(axis.text.x = element_text(size=8, angle=90),  
+        axis.text.y = element_text(size=8),
+        axis.title.x = element_text(size=10), 
+        axis.title.y = element_text(size=10),
+        #strip.text.x = element_text(size=8), 
+        #strip.text.y = element_text(size=8),
+        #strip.background=(element_rect(fill="white")),
+        #legend.position = "bottom",
+        aspect.ratio = 1,
+        plot.title=element_text(size=13, face="bold", hjust=0.5),
+        axis.ticks.x=element_blank(),
+        axis.ticks.y=element_blank()) +
+  labs(title="Biomarker Heat Map, No Scaling") +
+  xlab("\n\nSubject") +
+  ylab("Biomarker\n\n")
+
+```
+
+
+```{r hw14plot2, echo=TRUE, warning=FALSE, message=FALSE, fig.cap="Heatmap of the biomarker data after scaling."}
+
+###Scale Data and Replot with geom_tile####
+bmx3 <- bmx2
+bmx3[, 2:31] <- scale(bmx3[, 2:31])
+bmx3L <- melt(bmx3, value.name="Value", variable.name="subject")
+bmx3L$subject_cd<- substr(bmx3L$subject, 18, 27)
+
+
+ggplot(bmx3L, aes(subject_cd, Biomarker) ) + 
+  geom_tile(aes(fill= Value) ) +
+  theme(axis.text.x = element_text(size=8, angle=90),  
+        axis.text.y = element_text(size=8),
+        axis.title.x = element_text(size=10), 
+        axis.title.y = element_text(size=10),
+        #strip.text.x = element_text(size=8), 
+        #strip.text.y = element_text(size=8),
+        #strip.background=(element_rect(fill="white")),
+        #legend.position = "bottom",
+        aspect.ratio = 1,
+        plot.title=element_text(size=13, face="bold", hjust=0.5),
+        axis.ticks.x=element_blank(),
+        axis.ticks.y=element_blank()) +
+  #scale_fill_manual()     # if want to change color need to use this
+  labs(title="Biomarker Heat Map, with Scaling") +
+  xlab("\n\nSubject") +
+  ylab("Biomarker\n\n")
+
+
+```
+
+
+```{r hw14plot3, echo=TRUE, warning=FALSE, message=FALSE, fig.cap="."}
+
+# Subset data with Parameter = 'PT' only
+pt <- bleed[which(bleed$PARAMCD == 'PT'),]
+   # can use this function as well: pt <- bleed %>% filter(PARAMCD == "PT" )
+
+# Average the duplicate values at each timeindays
+# Transpose the data to wide format 
+
+ pt1 <- pt %>% 
+  group_by(subj, dose, timeindays) %>% 
+  dplyr::summarise(Mean_PCHG=mean(PCHG)) %>% 
+  spread(key = timeindays, value = Mean_PCHG)
+
+# prepare data format for heatmap
+pt2 <- pt1[,-c(1,2)] # only keep numeric columns
+rownames(pt2) <- paste(pt1$dose,'/',pt1$subj) # assign rownames
+
+
+# # plot a super heatmap
+#  superheat(pt2, 
+#           # scale the variables/columns
+#           scale = T, 
+#           # pretty.order.rows = TRUE,
+#           left.label.size=0.26,
+#           left.label.text.size = 3,
+#           bottom.label.size=0.06,
+#           bottom.label.text.size = 3,
+#           row.title="Subject",
+#           column.title="Time in Days",
+#           left.label.text.alignment = "right"       )
+# 
+
+# Order the rows by dose
+pt1$dose <- factor(pt1$dose, levels=c("PLACEBO", "LOW", "MIDDLE", "HIGH")) 
+pt1 <- pt1[order(pt1$dose),]
+pt3 <- pt1[,-c(1,2)]
+rownames(pt3) <- paste(pt1$dose,'/',pt1$subj)
+#head(pt3,8)
+
+superheat(pt3, 
+          # scale the variables/columns
+          scale = T, 
+          left.label.size=0.26,
+          left.label.text.size = 3,
+          bottom.label.size=0.06,
+          bottom.label.text.size = 3,
+          row.title="Subject",
+          column.title="Time in Days",
+          #order.rows = order(rownames(pt3))
+          left.label.text.alignment = "right"  )
+
+```
+
+
+```{r hw14plot4, echo=TRUE, warning=FALSE, message=FALSE, fig.cap="."}
+
+# # plot a super heatmap with line
+# superheat(pt3, 
+#           # scale the variables/columns
+#           scale = T,
+#           
+#           # add mean as a line plot next to the rows
+#           yt = colMeans(pt3,na.rm=T),
+#           yt.axis.name = "Mean\n across\nsubjects",
+#           yt.plot.type = "scatterline",
+#           
+#           left.label.size=0.26,
+#           left.label.text.size = 3,
+#           bottom.label.size=0.06,
+#           bottom.label.text.size = 3,
+#           row.title="Subject",
+#           column.title="Time in Days",
+#           left.label.text.alignment = "right",
+#           
+#           legend.height=0.07, legend.text.size=8,
+#           
+#           # order the rows by xxx
+#           #order.rows = order(rownames(pt3)) 
+#           )
+
+# heatmap with line plot on top and bar plot on right 
+superheat(pt3, 
+          # scale the variables/columns
+          scale = T,
+          
+          # add mean as a line plot on the top
+          yt = colMeans(pt3,na.rm=T),
+          yt.axis.name = "Mean\n across\nsubjects",
+          yt.plot.type = "scatterline",
+          
+          # add mean as a line plot next to the rows
+          yr = rowMeans(pt3,na.rm=T),
+          yr.axis.name = "Mean across\nTime",
+          yr.plot.type = "bar",
+          membership.rows=pt1$dose,
+          yr.cluster.col = c("#453781FF", "#287D8EFF",  "#55C667FF","#B8DE29FF"),
+             # VIRIDIS PALETTE
+          
+          left.label.size=0.14,
+          left.label.text.size = 2.5,
+          bottom.label.size=0.06,
+          bottom.label.text.size = 3,
+          row.title="Subject",
+          column.title="Time in Days",
+          left.label.text.alignment = "right",
+          legend.height=0.07, legend.text.size=8,
+          
+          # order the rows by xxx
+          #order.rows = order(rownames(pt3)) 
+          )
+
+
+
+```
+
+
+# Assignment 15
+
+The goal of this assignment is to generate interactive plots using the [plotly R package](https://cran.r-project.org/web/packages/plotly/plotly.pdf) and animated plots using the [gganimate R package](https://cran.r-project.org/web/packages/gganimate/gganimate.pdf). The plotly package creates interactive web graphics from ‘ggplot2’ graphs; this is accomplished with minimal additional coding, and there are many [online examples](https://plot.ly/ggplot2/) of interactive plots created with plotly. The gganimate package creates animations with ggplot2; examples of animated plots created with gganimate can be found [here](https://www.datanovia.com/en/blog/gganimate-how-to-create-plots-with-beautiful-animation-in-r/). 
+
+
+## Data
+
+The data comes from Janssen oncology in vivo study where 60 animals were randomized to 6 treatment groups and data on change in body weight from baseline and tumor volume was collected over times. Available variables (in Assign15.xlsx file):
+
+* treatment: Group 01-Group 06
+* animal_id: Animal ID
+* day: Four timepoints = 7, 11, 14, 18; day=7 refers to baseline
+* tumor_volume: Tumor volume in mm3
+* body_weight_change_percent: Change in body weight from the baseline (in percent)
+
+## Question
+
+We will use oncology in vivo data to explore some interactive plots and animated plots.
+
+**Interactive Plots**
+
+Install and load the plotly packages. Read in data using `read_excel()` from readxl package. We will use oncology in vivo data to generate interactive plots. 
+
+* Check for differences in longitudinal tumor volume profiles between treatment groups by generating an interactive spaghetti plot of tumor volume vs. day, faceted by treatment groups
+<br>
+**Hint:** You could generate static spaghetti plot using `ggplot()` and then apply `ggplotly()` to the generated spaghetti plot to make it interactive. Add color to distinguish between different animals.
+* Check for differences in baseline (day=7) tumor volume distributions between treatment groups by generating an interactive boxplot of baseline (day=7) tumor volume by treatment group
+<br>
+**Hint:** Filter baseline data using `filter()` in tidyverse package (refer to Assignment 13).
+* Optional (Advanced): Summarize longitudinal tumor volume profiles by calculating mean tumor volume +/- standard error for each treatment group at each time point.
+<br>
+**Hint:** Use `group_by` from tidyverse package. (refer to Assignment 13). Create an interactive lineplot of mean tumor volume +/- standard error over time for each treatment group.
+  + mean 
+  + standard error (**Hint:** sd/sqrt(n))
+  + lower=mean-standard error
+  + upper=mean + standard error
+<br>
+After generating summary statistics, generate an interactive line plot of mean vs day. Add error bars to each mean data point.
+<br>
+**Hint:** use `geom_errorbar(aes(ymin=lower, ymax=upper), width=, position=position_dodge(width =))`.  
+The `position=` is to shift line to avoid overlapping (refer to Assignment 3). Add color and line type to distinguish the lines by treatment.
+
+
+**Animated Plots**
+
+Install and load the gganimate package. We will use same data to explore animated plots.
+
+* Generate a scatterplot of body weight change (%) vs. tumor volume. Add color to distinguish the points between treatments and facet to distinguish between tumor volume vs body weight change relationship between treatments. Then use `transition_states()` to generate transition plot through distinct days.
+<br>
+**Hint:** You could use `labs(title="day: {frame_time}")` to have the time appear on the animated plot.
+
+3. Optional (Advanced): Create mean for tumor volume by treatment and day.
+<br>
+**Hint:** Use `group_by` from tidyverse package (refer to Assignment 13). Generate a line plot of mean vs. day. Add color to distinguish the lines by treatment. Then apply `transition_reveal()` to reveal data gradually.
+<br>
+**Hint:** You could use `transition_reveal(day)`. You may also add `geom_point(aes(group = seq_along(day)))` to keep points in the animated line plot.
+
+## Solution
+
+**Interactive Plots**
+```{r hw15plot1, echo=TRUE, warning=FALSE, message=FALSE, fig.cap="Interactive spaghetti plot of tumor volume to check for differences in longitudinal tumor volume profiles beween treatment groups for different animals."}
+
+# set up
+library(plotly)
+library(readxl)
+library(tidyverse)
+
+# load data 
+dat=read_excel("data/Assign15.xlsx", sheet= "Raw Data TV")
+
+p1=ggplot(dat, aes(x = day, y = tumor_volume, color = animal_id)) + 
+   geom_point()+
+   geom_line()+
+   theme_bw()+
+   scale_x_continuous(breaks=c(7,11,14,18))+
+   ylab('Tumor Volume') +
+   facet_wrap(~ treatment)
+
+ggplotly(p1)
+
+```
+
+```{r hw15plot2, echo=TRUE, warning=FALSE, message=FALSE, fig.cap="Interactive boxplot of baseline (day=7) tumor volume to check for differences in baseline (day=7) tumor volume distributions between treatment groups."}
+
+p2 <- dat %>%
+  filter(day == 7)%>%
+  ggplot(aes(x = treatment, y = tumor_volume, fill = treatment)) +
+  geom_boxplot()+
+  geom_point()+
+  xlab('Treatment') +
+  ylab('Tumor Volume')+
+  theme_bw() 
+   
+ggplotly(p2)
+
+```
+
+```{r hw15plot3, echo=TRUE, warning=FALSE, message=FALSE, fig.cap="Interactive line plot of mean tumor volume vs day with error bars for each mean data point. "}
+
+avg = dat %>%  
+  group_by(treatment, day) %>%
+  dplyr::summarise(n=n(), mean = round(mean(tumor_volume),2), 
+            sd = sd(tumor_volume),
+            se=round(sd/sqrt(n), 2),
+            lower=mean-se, upper=mean+se ) # mean, sd,  se by treatment and day
+
+pd = position_dodge(width = 0.2) # for shift line to avoid overlapping
+
+p3 <-
+  ggplot(data=avg, aes(x=day, y=mean, colour=treatment)) +
+  geom_line(position=pd) +
+  geom_point(position=pd)+
+  geom_errorbar(aes(ymin=lower, ymax=upper), width=1, position=pd) +
+  scale_x_continuous(breaks=c(7,11,14,18))+
+  xlab('Day') +
+  ylab('Tumor Volume') +
+  theme_bw() 
+
+ggplotly(p3)
+
+```
+
+**Animated Plots**
+
+```{r hw15plot4, echo=TRUE, warning=FALSE, message=FALSE, fig.cap="Transition of scatterplot of body weight change (%) vs. tumor volume over days  with different colours to distinguish the points between treatments and facet to distinguish between tumor volume vs body weight change relationship between treatments."}
+
+# set up
+library(png)
+library(gganimate)
+library(gifski)
+
+# load data 
+dat %>%
+  ggplot(aes(x = body_weight_change_percent, y = tumor_volume, color = treatment) ) + 
+  geom_point(size=3, alpha = 0.6) +
+  theme_bw() +
+  facet_grid((~treatment)) +
+  geom_vline(xintercept = c(100), colour = "black", linetype = "longdash", alpha = 0.4) +
+  transition_states(day, transition_length = 50, state_length = 3) +
+  labs(title = 'Day: {closest_state}', xlab = "% body weight") +
+  theme(plot.title = element_text(hjust=0.5))
+
+```
+
+```{r hw15plot5, echo=TRUE, warning=FALSE, message=FALSE, fig.cap="Animated line plot to show transition of mean tumor volume over time with different colours to distinguish between treatments."}
+
+avg1= dat %>%  
+group_by(treatment, day) %>%
+dplyr::summarise(n=n(), mean = mean(tumor_volume) ) # mean by treatment and day
+
+p5=ggplot(data=avg1, aes(x=day, y=mean, color=treatment)) +
+   geom_line(aes(group=treatment)) +
+   xlab('Day ') +
+   ylab('Mean Tumor Volume') +
+   scale_x_continuous(breaks=c(7,11,14,18))+
+   theme_bw() +
+   theme(legend.position = "bottom")
+
+
+p5+transition_reveal(day) +geom_point(aes(group = seq_along(day)))
+
+```
+
+
+# Assignment 16
+
+**Interactive Dashboards with Flexdashboard and Shiny**
+
+By now you know how to create interactive plots (refer to Assignment 15) and how to create a flexdashboard (refer to Assignment 11-12). In this assignment you will be using your interactive graphics and flexdashboard building expertise to build a dashboard that enable users to change options and see the updated results immediately. You can add this functionality in a dashboard by combining flexdashboard with Shiny. Briefly, this is done by adding `runtime: shiny` to the YAML header of the flexdashboard, and then adding inputs that the user can modify (e.g. sliders, checkboxes), and outputs (e.g. tables, static and non-static plots) and reactive expressions that dynamically drive the components within the dashboard. Input elements are typically presented within a sidebar and outputs within flexdashboard content panes. Note that standard flexdashboards are stand-alone documents that can be easily shared with others. However, by adding Shiny to flexdashboard we create interactive documents that need to be deployed to a server to be shared broadly. Further details about how to use Shiny with flexdashboard can be found in the flexdashboard [website](https://rmarkdown.rstudio.com/flexdashboard/shiny.html). You can use the below for your YAML header with appropriate spacing.
+
+title: “Exploratory data analysis”
+<br>
+author: xxxxxxxxxxxx
+<br>
+output:
+<br>
+  flexdashboard::flex_dashboard:
+<br>
+    orientation: rows
+<br>
+    theme: simplex
+<br>
+    runtime: shiny
+
+You can also create dashboards with Shiny by using the shinydashboard package. This package provides a number of color themes that make it easy to create dashboards with an attractive appearance. Information about shinydashboard can be seen on the shinydashboard [website](https://rstudio.github.io/shinydashboard/). You can use shinydashboard for this assignment if you chose so. However, for simplicity I suggest to use flexdashboards with Shiny to solve Assignment 16.
+
+## Data
+
+For this assignment, we will use data data from Assignment 15. Moreover, you can use R code that you developed to create interactive plots in Assignment 15.
+
+## Question
+
+To conduct EDA of a study endpoints you are asked to build a flexdashboard with Shiny to display a series of interactive plots exploring longitudinal individual and mean profiles as well as a cross-sectional distribution of an endpoint. The ask is to create a dashboard that allows a user to:
+
+* select an endpoint of interest
+* select a time point for cross-sectional evaluation of an endpoint
+* select a font size for treatment group label for spaghetti plots
+
+Create a flexdashboard with 3 plots from Assignment 15 (refer to Assignment 15 > Interactive plots). Label the charts.
+
+* Interactive spaghetti plot of tumor volume vs. day, faceted by treatment groups. Add color to distinguish between different animals.
+<br>
+**Hint:** One can use row orientation and display spaghetti plot at the top using `facet_grid()` for better display.
+* Interactive boxplot of tumor volume at baseline (day 7) by treatment group.
+* Interactive lineplot of mean tumor volume +/- standard error over time for each treatment group.
+
+Imagine that in addition to exploring tumor volume, a user is also interested in visually evaluating change in body weight. Create functionality to let the user choose the endpoint of interest for your flexdashboard. First, create a sidebar using `Column {.sidebar}`. Within the sidebar, create a way for a user to choose between two endpoints. A simple way to do it is to extract column names of the data set and display the column names as options within a sidebar using `selectInput()`. Now you need to connect user endpoint choice to all graphic outputs to dynamically update the plots, based on user input for a endpoint.
+<br>
+**Hint 1:** use `renderPlotly({})` as a wrapper for all ggplotly plots.
+<br>
+**Hint 2:** if you are using tidyverse but not familiar with Bang-Bang operator (!!) you can use the following code inside `renderPlotly({})` to pipe the data into your `ggplot()`, where `input$var` is an inputId name from `selectInput()`:
+<br>
+`data %>% select(!!sym(input$var), treatment, animal_id, day) %>% mutate(y = .[[1]]) %>% ggplot(...)`
+<br>
+Use **Hint 2** for all three plots within your dashboard. Successful completion of this part will dynamically display the plots created in the first part, based on the endpoint selected by an user.
+
+Imagine your treatment group names are very long and become not fully readable in spaghetti plot panels. Create a way for a user to specify font size for spaghetti plots treatment panel labels.
+<br>
+**Hint:** one way to do it is to add `sliderInput()` to the sidebar created in the previous part of the exercise.
+
+Lastly, create a way for a user to specify a time point for cross-sectional evaluation in a boxplot.
+<br>
+**Hint:** Display unique values of day variable in the data set using *radioButtons()* in the sidebar you already created.
+
+## Solution
+
+The codes necessary for this assignment is made available in a separate file in the GitHub repository in this section and the corresponding results are available [online](https://rudradevsengupta.shinyapps.io/assign16sol/). One needs to set the output parameter in the Rmarkdown YAML header as `flexdashboard::flex_dashboard`.
+
